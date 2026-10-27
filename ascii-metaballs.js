@@ -1,21 +1,35 @@
 // Edit these settings, then reload the page.
+// Masks affect visibility only; the two clusters keep their corner-based motion.
 const METABALL_CONFIG = {
-  backgroundColor: '#090a0f', // Any CSS color, including 'transparent'.
-  asciiColor: '#aab7c8',      // Six-digit hex: #RRGGBB.
-  cornerReach: 1.28,         // 0.1–0.5: fraction of viewport width/height.
-  deformSpeed: 1.2,            // Animation multiplier; 0 freezes deformation.
-  maxAlpha: 0.42,            // 0–1: maximum glyph opacity.
-  centerFalloff: 3,          // 0 = linear; higher = stronger fade toward center.
+  backgroundColor: '#023FCC', // Any CSS color, including 'transparent'.
+  asciiColor: '#EBEBEB',      // Six-digit hex: #RRGGBB.
+  deformSpeed: 1,            // Animation multiplier; 0 freezes deformation.
+  maxAlpha: 0.8,            // 0–1: maximum glyph opacity.
+  blobDiameterMin: 0.1,    // >= 0: fraction of shorter viewport side; 0.1 = 10%.
+  blobDiameterMax: 0.4,    // >= min; set both equal for a fixed diameter.
+  // These size individual field sources; merged shapes can appear larger.
+
+  cornerMaskEnabled: true,
+  cornerReach: 5.2,         // > 0: coverage relative to viewport width/height.
+  cornerFeather: 0.4,      // 0–0.5: fade before quadrant edges; 0 = hard edge.
+
+  centerDeadzoneEnabled: true,
+  centerDeadzoneRadius: 0.1, // 0–1.42: normalized radius; larger = more empty space.
+  // Radius units: 1 reaches edge midpoints; sqrt(2) reaches viewport corners.
+  centerDeadzoneFeather: 0.6, // >= 0: fade width outside radius; 0 = hard edge.
+  centerFalloff: 2,       // >= 0: higher = stronger fade; 0 = linear curve.
+
   cursorEnabled: true,
   cursorRadius: 240,         // Interaction distance in CSS pixels; must be > 0.
-  cursorStrength: 36,        // Maximum attraction in CSS pixels; 0 disables it.
+  cursorStrength: 12,        // Maximum attraction in CSS pixels; 0 disables it.
 };
 
 /**
  * Mount a fixed ASCII background behind the host's content.
  * The host needs isolation: isolate; avoid transformed ancestors.
  * Returns an idempotent cleanup function for page/component unmounts.
- * Cursor attraction respects the corner/center masks and fades out on leave.
+ * Two clusters orbit the top-left and bottom-right corners and follow the cursor.
+ * Corner and center masks are independent; disable either in METABALL_CONFIG.
  * Reduced motion disables deformation and cursor response.
  */
 export function mountAsciiMetaballs(host = document.body) {
@@ -32,8 +46,9 @@ export function mountAsciiMetaballs(host = document.body) {
   const glyphs = '.·:+*#%@';
   const step = 14;
   const peak = METABALL_CONFIG.maxAlpha;
-  const reach = METABALL_CONFIG.cornerReach;
-  const falloff = METABALL_CONFIG.centerFalloff;
+  const minRadius = METABALL_CONFIG.blobDiameterMin / 2;
+  const radiusRange = (METABALL_CONFIG.blobDiameterMax
+    - METABALL_CONFIG.blobDiameterMin) / 2;
   const hex = Number.parseInt(METABALL_CONFIG.asciiColor.slice(1), 16);
   const rgb = `${hex >> 16 & 255},${hex >> 8 & 255},${hex & 255}`;
   const colors = Array.from({ length: 128 }, (_, i) =>
@@ -41,12 +56,17 @@ export function mountAsciiMetaballs(host = document.body) {
   const blobs = Array.from({ length: 8 }, (_, i) => ({
     corner: i < 4 ? 0 : 1,
     phase: i * 2.39996,
-    speed: 0.17 + (i % 4) * 0.037,
+    speed: 0.28 + (i % 4) * 0.045,
     x: 0, y: 0, r2: 0,
   }));
   let width = 0, height = 0, dpr = 0;
   let cells = [], frame = 0, last = 0, time = 0, disposed = false;
   let pointerX = 0, pointerY = 0, pointerActive = false, cursorBlend = 0;
+
+  function smoothstep(value) {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+  }
 
   function resize() {
     width = window.innerWidth;
@@ -61,19 +81,35 @@ export function mountAsciiMetaballs(host = document.body) {
     cells = [];
     for (let y = step / 2; y < height; y += step) {
       for (let x = step / 2; x < width; x += step) {
-        const corner = x < width / 2 && y < height / 2 ? 0
-          : x > width / 2 && y > height / 2 ? 1 : -1;
-        if (corner < 0) continue;
-        const nx = (corner ? width - x : x) / (width * reach);
-        const ny = (corner ? height - y : y) / (height * reach);
-        const edge = Math.max(0, 1 - Math.hypot(nx, ny));
-        const distance = Math.hypot(2 * x / width - 1, 2 * y / height - 1);
-        // Exact zero inside the central ellipse; exponential fade outside it.
-        const outside = Math.max(0, (distance - 0.74) / (Math.SQRT2 - 0.74));
-        const centerFade = falloff === 0 ? outside
-          : Math.expm1(falloff * outside) / Math.expm1(falloff);
-        const mask = edge * edge * centerFade;
-        if (mask * peak >= 0.01) cells.push({ x, y, corner, mask });
+        let mask = 1;
+        if (METABALL_CONFIG.cornerMaskEnabled) {
+          // Keep complete glyph cells inside the two supported quadrants.
+          const corner = x + step / 2 <= width / 2 && y + step / 2 <= height / 2 ? 0
+            : x - step / 2 >= width / 2 && y - step / 2 >= height / 2 ? 1 : -1;
+          if (corner < 0) continue;
+          const localX = (corner ? width - x : x) / width;
+          const localY = (corner ? height - y : y) / height;
+          const edge = Math.max(0, 1
+            - Math.hypot(localX, localY) / METABALL_CONFIG.cornerReach);
+          const feather = METABALL_CONFIG.cornerFeather;
+          const boundaryFade = feather === 0 ? 1
+            : smoothstep((0.5 - localX) / feather)
+              * smoothstep((0.5 - localY) / feather);
+          mask *= edge * edge * boundaryFade;
+        }
+        if (METABALL_CONFIG.centerDeadzoneEnabled) {
+          // Radius 1 reaches the midpoint of an edge; sqrt(2) reaches a corner.
+          const distance = Math.hypot(2 * x / width - 1, 2 * y / height - 1);
+          const radius = METABALL_CONFIG.centerDeadzoneRadius;
+          const feather = METABALL_CONFIG.centerDeadzoneFeather;
+          const outside = feather === 0 ? Number(distance > radius)
+            : Math.max(0, Math.min(1, (distance - radius) / feather));
+          const falloff = METABALL_CONFIG.centerFalloff;
+          const centerFade = falloff === 0 ? outside
+            : Math.expm1(falloff * outside) / Math.expm1(falloff);
+          mask *= smoothstep(centerFade * 2);
+        }
+        if (mask * peak >= 0.01) cells.push({ x, y, mask });
       }
     }
     draw();
@@ -81,12 +117,11 @@ export function mountAsciiMetaballs(host = document.body) {
 
   function draw() {
     ctx.clearRect(0, 0, width, height);
-    const reachScale = reach / 0.48;
-    const scale = Math.min(width, height) * reachScale;
+    const scale = Math.min(width, height);
     for (const blob of blobs) {
       const angle = time * blob.speed + blob.phase;
-      let x = width * reachScale * (0.09 + 0.065 * Math.sin(angle));
-      let y = height * reachScale * (0.09 + 0.065 * Math.cos(angle * 0.83));
+      let x = width * (0.13 + 0.11 * Math.sin(angle));
+      let y = height * (0.13 + 0.11 * Math.cos(angle * 0.83));
       x = blob.corner ? width - x : x;
       y = blob.corner ? height - y : y;
       const dx = pointerX - x, dy = pointerY - y;
@@ -96,18 +131,19 @@ export function mountAsciiMetaballs(host = document.body) {
         * Math.min(distance, METABALL_CONFIG.cursorStrength);
       blob.x = x + dx / Math.max(1, distance) * pull;
       blob.y = y + dy / Math.max(1, distance) * pull;
-      const radius = scale * (0.065 + 0.012 * Math.sin(angle * 1.31));
+      const growth = 0.5 + 0.5 * Math.sin(angle * 1.31);
+      const radius = scale * (minRadius + radiusRange * growth);
       blob.r2 = radius * radius;
     }
     for (const cell of cells) {
       let field = 0;
-      for (let i = cell.corner * 4; i < cell.corner * 4 + 4; i++) {
-        const blob = blobs[i];
+      for (const blob of blobs) {
         const dx = cell.x - blob.x, dy = cell.y - blob.y;
         field += blob.r2 / Math.max(1, dx * dx + dy * dy);
       }
-      if (field < 0.01) continue;
-      const intensity = 1 - Math.exp(-1.3 * Math.max(0, field - 0.35));
+      if (field <= 0.8) continue;
+      // A soft isocontour reveals merging lobes with transparent edges.
+      const intensity = smoothstep((field - 0.8) / 1.4);
       const alpha = peak * cell.mask * intensity;
       if (alpha < 0.01) continue;
       ctx.fillStyle = colors[Math.round(alpha / peak * 127)];
