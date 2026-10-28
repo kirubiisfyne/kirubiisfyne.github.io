@@ -1,0 +1,36 @@
+@import '@fontsource/jetbrains-mono/400.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-mono: 'JetBrains Mono', monospace;
+  --color-paper: #ebebeb;
+  --color-cobalt: #023fcc;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--color-paper);
+    background: var(--color-cobalt);
+  }
+
+  body {
+    margin: 0;
+    font-size: 12px;
+    line-height: 16px;
+    min-width: 320px;
+    min-height: 100vh;
+    isolation: isolate;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 6px;
+  }
+}

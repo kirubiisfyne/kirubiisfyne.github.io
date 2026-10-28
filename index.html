@@ -4,26 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Portfolio</title>
-    <style>
-      html {
-        color-scheme: dark;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        isolation: isolate;
-      }
-    </style>
+    <link rel="icon" href="data:," />
   </head>
   <body>
-    <!-- Keep future content wrappers transparent to reveal the background. -->
-    <script type="module">
-      import { mountAsciiMetaballs } from './ascii-metaballs.js';
-
-      // Mount outside transformed containers. For SPA integration, call the
-      // returned destroyBackground function when the page shell unmounts.
-      const destroyBackground = mountAsciiMetaballs();
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

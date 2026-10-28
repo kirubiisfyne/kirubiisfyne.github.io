@@ -1,15 +1,16 @@
 // Edit these settings, then reload the page.
 // Masks affect visibility only; the two clusters keep their corner-based motion.
 const METABALL_CONFIG = {
-  backgroundColor: '#023FCC', // Any CSS color, including 'transparent'.
+  backgroundColor: '2', // Any CSS color, including 'transparent'.
   asciiColor: '#EBEBEB',      // Six-digit hex: #RRGGBB.
   deformSpeed: 1,            // Animation multiplier; 0 freezes deformation.
-  maxAlpha: 0.8,            // 0–1: maximum glyph opacity.
-  blobDiameterMin: 0.1,    // >= 0: fraction of shorter viewport side; 0.1 = 10%.
-  blobDiameterMax: 0.4,    // >= min; set both equal for a fixed diameter.
+  maxAlpha: 0.3,            // 0–1: maximum glyph opacity.
+  // ~70% occupied cells at 1440x900; motion and aspect ratio affect coverage.
+  blobDiameterMin: 0.47,    // >= 0: fraction of shorter viewport side; 0.1 = 10%.
+  blobDiameterMax: 0.53,    // >= min; set both equal for a fixed diameter.
   // These size individual field sources; merged shapes can appear larger.
 
-  cornerMaskEnabled: true,
+  cornerMaskEnabled: false, // Enable only for corner coverage (at most 50%).
   cornerReach: 5.2,         // > 0: coverage relative to viewport width/height.
   cornerFeather: 0.4,      // 0–0.5: fade before quadrant edges; 0 = hard edge.
 
