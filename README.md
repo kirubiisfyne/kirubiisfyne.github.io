@@ -23,6 +23,14 @@ npm run preview
 
 The production output is `dist/`. Build does not run type-checking automatically; run both commands above.
 
+## Publish to GitHub Pages
+
+In repository **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source, not “Deploy from a branch.” Commit and push `.github/workflows/deploy.yml` to `main`.
+
+The workflow runs `npm ci`, type-checks, builds with Vite, and deploys only `dist/` to https://kirubiisfyne.github.io/. Publishing the repository root serves the uncompiled `/src/main.tsx` entry and cannot run the app.
+
+The default Vite base `/` is correct for this user-site repository. No `gh-pages` branch, committed `dist/`, or additional base-path setting is needed.
+
 ## Structure
 
 - `src/components/H1.tsx`, `H2.tsx`, `ProjectCarousel.tsx`: reusable typed components, built and browser-verified before page composition.
@@ -32,5 +40,7 @@ The production output is `dist/`. Build does not run type-checking automatically
 - `ascii-metaballs.js`: existing renderer, unchanged. `MetaballBackground` mounts it once and returns its cleanup function; reduced-motion preferences retain the original static treatment.
 
 The existing blue base and glyph palette are preserved. Foreground page wrappers are transparent; the design's local highlight bars remain. Reference descriptions intentionally retain the supplied Figma copy.
+
+Page content defaults to 125% via `#root { zoom: 1.25; }` in `src/styles.css`. View it with browser zoom at 100% to avoid applying the enlargement twice. The viewport-sized metaball canvas remains outside the scaled root.
 
 [Implementation tasks](specs/001-react-portfolio/tasks.md) · [Verification record and screenshots](specs/001-react-portfolio/quickstart.md) · [Figma source](https://www.figma.com/design/8Qb17gg8m0JsxFuEScxxsG/Untitled?node-id=1-2)

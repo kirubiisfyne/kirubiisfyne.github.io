@@ -25,6 +25,11 @@
     isolation: isolate;
   }
 
+  /* Scale content without changing the viewport-sized canvas outside #root. */
+  #root {
+    zoom: 1.25;
+  }
+
   button {
     font: inherit;
   }

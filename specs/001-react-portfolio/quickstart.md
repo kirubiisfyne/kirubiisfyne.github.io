@@ -58,6 +58,14 @@ Actual production screenshots (not Figma exports):
 - [Desktop](evidence/desktop.png)
 - [Mobile](evidence/mobile.png)
 
+## Default Content Scale — Follow-up
+
+The user requested the larger presentation seen at 125% browser zoom. Content now uses `zoom: 1.25` on `#root`, with the existing canvas outside that root so its viewport coverage and renderer settings remain unchanged. This sets the application's presentation scale, not the browser's zoom preference; use browser zoom at 100%.
+
+Verified the development page at widths of 1280, 375, and 320 pixels: computed root zoom was `1.25`, the heading's 16-pixel line box rendered at 20 pixels, all non-decoratively-clipped artwork and controls stayed within the viewport, and there was no horizontal overflow. One canvas continued to match the unscaled viewport. Desktop/mobile screenshots were visually inspected; no browser errors were observed. `npm run build` passed.
+
+The production screenshots and detailed measurements earlier in this record describe the initial, unscaled implementation; they are retained as historical evidence, not screenshots of this later presentation update.
+
 ## Rechecking Behavior
 
 Use [component contracts](contracts/components.md) and [data model](data-model.md) for expected behavior. The production collection intentionally has one item, so multi-item/empty/broken-image checks require an isolated temporary harness with distinct records; do not add demonstration projects to `src/data/projects.ts`.
@@ -68,3 +76,13 @@ Use [component contracts](contracts/components.md) and [data model](data-model.m
 - Accessibility inspection covered semantic names, decorative-image exclusion, keyboard activation/focus, and the polite status content; no screen-reader audio session was performed.
 - The requested unchanged animated glyphs overlap foreground text in some regions; no additional contrast scrim, altered renderer settings, or palette change was introduced.
 - Reference descriptions remain the supplied Figma copy. No additional projects, backend, persistence, routing, or deployment configuration was requested.
+
+## GitHub Pages Publishing Diagnosis
+
+The live repository Pages configuration was `legacy`, serving branch `main` at `/`. Its published HTML referenced `/src/main.tsx`, which GitHub served as `application/octet-stream`; no Vite compilation or generated stylesheet was being deployed. This explains the empty root and blank page.
+
+Added `.github/workflows/deploy.yml` to install dependencies, type-check, build, and deploy `dist/` using the official Pages actions. The user-site URL needs Vite's default `/` base, so no base-path change was made. Repository Pages source is now **GitHub Actions**; pushes to `main` trigger the deployment workflow.
+
+Initial verification: workflow YAML parsed; `npm ci`, `npm run typecheck`, and `npm run build` passed. A local browser inspection of the built artifact loaded its `/assets/*.js` entry, all artwork, three semantic headings, and one canvas, with no failed resource statuses or JavaScript errors. Subsequent remote deployment results are available in the repository's GitHub Actions runs.
+
+Reference: [Vite GitHub Pages deployment guide](https://vite.dev/guide/static-deploy.html#github-pages).
