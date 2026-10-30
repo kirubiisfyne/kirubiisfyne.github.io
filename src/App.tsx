@@ -1,5 +1,5 @@
-import { MetaballBackground } from './components/MetaballBackground';
-import { PortfolioPage } from './pages/PortfolioPage';
+import { MetaballBackground } from './components/MetaballBackground'
+import { PortfolioPage } from './pages/PortfolioPage'
 
 export function App() {
   return (
@@ -7,5 +7,5 @@ export function App() {
       <MetaballBackground />
       <PortfolioPage />
     </>
-  );
+  )
 }

@@ -11,10 +11,10 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   NeutralToneMapping,
-  Raycaster,
   Object3D,
   PerspectiveCamera,
   Quaternion,
+  Raycaster,
   RectAreaLight,
   Scene,
   Skeleton,
@@ -22,14 +22,14 @@ import {
   SRGBColorSpace,
   Texture,
   Vector2,
-  Vector4,
   Vector3,
+  Vector4,
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import type { GLTF, GLTFParser } from 'three/addons/loaders/GLTFLoader.js'
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js'
+import type { GLTF, GLTFParser } from 'three/addons/loaders/GLTFLoader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import type { Project } from '../types/project'
 
 export type DisplayMode = 'clay' | 'rendered' | 'wireframe'
@@ -50,10 +50,7 @@ export type ViewerStatus = {
   readonly requestId: number
   readonly requestedId: string
   readonly displayedId: string | null
-} & (
-  | { state: 'loading' | 'moving' | 'ready' }
-  | { state: 'error' | 'unavailable'; message: string }
-)
+} & ({ state: 'loading' | 'moving' | 'ready' } | { state: 'error' | 'unavailable'; message: string })
 
 export interface ModelViewerController {
   select(request: ViewerSelectionRequest): void
@@ -86,7 +83,12 @@ export interface ViewerAcceptanceHooks {
     position: [number, number, number]
     scale: [number, number, number]
     progress: number | null
-    participants: { modelId: string; position: [number, number, number]; scale: [number, number, number]; pose: [number, number] }[]
+    participants: {
+      modelId: string
+      position: [number, number, number]
+      scale: [number, number, number]
+      pose: [number, number]
+    }[]
     phase: ViewerStatus['state']
   }): void
 }
@@ -95,7 +97,7 @@ const FULL_TURN = Math.PI * 2
 const KEY_TURN = Math.PI / 36
 
 function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 }
 
 const DITHER_DISCARD_CHUNK = `
@@ -124,7 +126,7 @@ function attachDither(material: Material, uniform: { value: number }): void {
     prevOnBeforeCompile?.(shader, rend)
     shader.uniforms.uDitherFade = uniform
     if (!shader.fragmentShader.includes('uDitherFade')) {
-      shader.fragmentShader = `uniform float uDitherFade;\n` + shader.fragmentShader
+      shader.fragmentShader = `uniform float uDitherFade;\n${shader.fragmentShader}`
       if (shader.fragmentShader.includes('#include <dithering_fragment>')) {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <dithering_fragment>',
@@ -133,7 +135,7 @@ function attachDither(material: Material, uniform: { value: number }): void {
       } else {
         const lastBrace = shader.fragmentShader.lastIndexOf('}')
         if (lastBrace !== -1) {
-          shader.fragmentShader = shader.fragmentShader.slice(0, lastBrace) + DITHER_DISCARD_CHUNK + '\n}'
+          shader.fragmentShader = `${shader.fragmentShader.slice(0, lastBrace)}${DITHER_DISCARD_CHUNK}\n}`
         }
       }
     }
@@ -180,10 +182,7 @@ function validateEmbeddedResources(parser: GLTFParser): void {
   }
   for (const definitions of [json.buffers, json.images]) {
     for (const definition of definitions ?? []) {
-      if (
-        definition.uri !== undefined &&
-        (typeof definition.uri !== 'string' || !/^data:/i.test(definition.uri))
-      ) {
+      if (definition.uri !== undefined && (typeof definition.uri !== 'string' || !/^data:/i.test(definition.uri))) {
         throw new Error('This model references external resources. Use a self-contained GLB file.')
       }
     }
@@ -307,25 +306,30 @@ function createLoadResources(): LoadResources {
 
   function instrument(parser: GLTFParser): void {
     const dependency = parser.getDependency.bind(parser)
-    parser.getDependency = (type, index) => dependency(type, index).then((value: unknown) => {
-      track(value)
-      return value
-    })
+    parser.getDependency = (type, index) =>
+      dependency(type, index).then((value: unknown) => {
+        track(value)
+        return value
+      })
 
     const imageSource = parser.loadImageSource.bind(parser)
-    parser.loadImageSource = (index, loader) => imageSource(index, loader).then((texture) => {
-      track(texture)
-      return texture
-    })
+    parser.loadImageSource = (index, loader) =>
+      imageSource(index, loader).then((texture) => {
+        track(texture)
+        return texture
+      })
 
     // Track each fulfilled primitive, not only the aggregate that can reject early.
     const loadGeometries = parser.loadGeometries.bind(parser)
-    parser.loadGeometries = (primitives) => Promise.all(primitives.map((primitive) =>
-      loadGeometries([primitive]).then((result) => {
-        track(result)
-        return result[0]
-      }),
-    ))
+    parser.loadGeometries = (primitives) =>
+      Promise.all(
+        primitives.map((primitive) =>
+          loadGeometries([primitive]).then((result) => {
+            track(result)
+            return result[0]
+          })
+        )
+      )
 
     const assignMaterial = parser.assignFinalMaterial.bind(parser)
     parser.assignFinalMaterial = (mesh) => {
@@ -371,7 +375,13 @@ type LoadContext = {
 
 const contextOwners = new WeakMap<HTMLCanvasElement, WebGLRenderer>()
 
-export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly Pick<Project, 'id' | 'modelUrl'>[], callbacks: ViewerCallbacks, acceptance?: ViewerAcceptanceHooks, options?: ViewerOptions): ModelViewerController {
+export function createModelViewer(
+  canvas: HTMLCanvasElement,
+  projects: readonly Pick<Project, 'id' | 'modelUrl'>[],
+  callbacks: ViewerCallbacks,
+  acceptance?: ViewerAcceptanceHooks,
+  options?: ViewerOptions
+): ModelViewerController {
   const rawGl = canvas.getContext('webgl2', { alpha: true, antialias: true })
   if (!rawGl) throw new Error('WebGL 2 is unavailable in this browser.')
   const gl = rawGl
@@ -383,7 +393,9 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     renderer.toneMapping = NeutralToneMapping
     renderer.toneMappingExposure = 1
     renderer.setClearColor(0x000000, 0)
-    renderer.debug.onShaderError = () => { throw new Error('The model could not be drawn by this graphics device.') }
+    renderer.debug.onShaderError = () => {
+      throw new Error('The model could not be drawn by this graphics device.')
+    }
   } catch (error) {
     gl.getExtension('WEBGL_lose_context')?.loseContext()
     throw error
@@ -435,7 +447,7 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
 
   function assignments(center: LoadContext): Map<LoadContext, Slot> {
     const slots = new Map<LoadContext, Slot>([[center, 'center']])
-    const index = projects.findIndex(project => project.id === center.modelId)
+    const index = projects.findIndex((project) => project.id === center.modelId)
     if (index < 0 || projects.length < 2) return slots
     const right = catalog.get(projects[(index + 1) % projects.length].id)
     if (right && right !== center) slots.set(right, 'right')
@@ -527,7 +539,8 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     returnDeltaYaw = shortestDelta(load.yaw, load.savedYaw)
     returnDeltaPitch = shortestDelta(load.pitch, load.savedPitch)
     returning = true
-    if (motionPreference.matches || (returnDeltaYaw === 0 && returnDeltaPitch === 0)) restoreInspection(load, returnStartedAtMs)
+    if (motionPreference.matches || (returnDeltaYaw === 0 && returnDeltaPitch === 0))
+      restoreInspection(load, returnStartedAtMs)
     if (eligible()) invalidate()
   }
 
@@ -566,7 +579,8 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       requestedId: selection.request.model.id,
       displayedId: displayed?.modelId ?? null,
     }
-    if (state === 'error' || state === 'unavailable') callbacks.onStatus({ ...identity, state, message: message ?? 'The model is unavailable.' })
+    if (state === 'error' || state === 'unavailable')
+      callbacks.onStatus({ ...identity, state, message: message ?? 'The model is unavailable.' })
     else callbacks.onStatus({ ...identity, state })
   }
 
@@ -640,8 +654,9 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     width = rect.width
     height = rect.height
     if (!(width > 0 && height > 0)) return false
-    const cssVar = getComputedStyle(canvas).getPropertyValue('--orbit-radius') ||
-                   getComputedStyle(canvas).getPropertyValue('--carousel-orbit-radius')
+    const cssVar =
+      getComputedStyle(canvas).getPropertyValue('--orbit-radius') ||
+      getComputedStyle(canvas).getPropertyValue('--carousel-orbit-radius')
     const parsedCss = parseFloat(cssVar)
     const rawOrbit = Number.isFinite(parsedCss) && parsedCss > 0 ? parsedCss : orbitRadius
     // On narrow screens (mobile), scale the effective orbit with available width
@@ -665,10 +680,12 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.setSize(width, height, false)
     camera.aspect = width / height
-    const verticalHalfFov = camera.fov * Math.PI / 360
+    const verticalHalfFov = (camera.fov * Math.PI) / 360
     const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect)
-    const distance = Math.max(1 + (2.22 * effectiveOrbit) / (Math.tan(horizontalHalfFov) * 0.82),
-      1 + (1.0 * effectiveOrbit) / (Math.tan(verticalHalfFov) * 0.9))
+    const distance = Math.max(
+      1 + (2.22 * effectiveOrbit) / (Math.tan(horizontalHalfFov) * 0.82),
+      1 + (1.0 * effectiveOrbit) / (Math.tan(verticalHalfFov) * 0.9)
+    )
     camera.position.set(0, 0, distance)
     camera.near = Math.max(0.01, distance - 1.1)
     camera.far = distance + rearDepth + 1.2
@@ -677,7 +694,15 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     return true
   }
   function eligible(): boolean {
-    return !disposed && !released && document.visibilityState !== 'hidden' && intersecting && focused && width > 0 && height > 0
+    return (
+      !disposed &&
+      !released &&
+      document.visibilityState !== 'hidden' &&
+      intersecting &&
+      focused &&
+      width > 0 &&
+      height > 0
+    )
   }
 
   function animationTime(now: number): number {
@@ -705,7 +730,7 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     const clearAlpha = renderer.getClearAlpha()
     const autoClear = renderer.autoClear
     const override = scene.overrideMaterial
-    const states = Array.from(catalog.values(), entry => ({
+    const states = Array.from(catalog.values(), (entry) => ({
       entry,
       visible: entry.presentation?.visible ?? false,
     }))
@@ -718,7 +743,12 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       if (import.meta.env.MODE === 'acceptance' && preview && acceptance?.failPreviewValidation?.(load.modelId, mode)) {
         throw new Error('Preview validation failed.')
       }
-      if (import.meta.env.MODE === 'acceptance' && !preview && load === candidate && acceptance?.failCandidateValidation?.(load.modelId, mode)) {
+      if (
+        import.meta.env.MODE === 'acceptance' &&
+        !preview &&
+        load === candidate &&
+        acceptance?.failCandidateValidation?.(load.modelId, mode)
+      ) {
         throw new Error('Candidate validation failed.')
       }
       for (const { entry } of states) if (entry.presentation) entry.presentation.visible = entry === load
@@ -797,14 +827,24 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     if (import.meta.env.MODE === 'acceptance' && acceptance?.onPresentationDrawn && center.presentation && selection) {
       const p = center.presentation
       acceptance.onPresentationDrawn({
-        requestId: selection.request.requestId, displayedId: center.modelId, timestamp: performance.now(),
+        requestId: selection.request.requestId,
+        displayedId: center.modelId,
+        timestamp: performance.now(),
         position: [p.position.x, p.position.y, p.position.z],
-        scale: [p.scale.x, p.scale.y, p.scale.z], phase, progress,
-        participants: Array.from(catalog.values()).filter(load => load.presentation?.visible).map(load => {
-          const object = load.presentation!
-          return { modelId: load.modelId, position: [object.position.x, object.position.y, object.position.z] as [number, number, number],
-            scale: [object.scale.x, object.scale.y, object.scale.z] as [number, number, number], pose: [load.yaw, load.pitch] as [number, number] }
-        }),
+        scale: [p.scale.x, p.scale.y, p.scale.z],
+        phase,
+        progress,
+        participants: Array.from(catalog.values())
+          .filter((load) => load.presentation?.visible)
+          .map((load) => {
+            const object = load.presentation!
+            return {
+              modelId: load.modelId,
+              position: [object.position.x, object.position.y, object.position.z] as [number, number, number],
+              scale: [object.scale.x, object.scale.y, object.scale.z] as [number, number, number],
+              pose: [load.yaw, load.pitch] as [number, number],
+            }
+          }),
       })
     }
   }
@@ -817,12 +857,21 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     const sideOffset = slotTransforms.right.x
     const rearDepth = Math.abs(slotTransforms.right.z) * 2
     for (const load of entries) {
-      if (!load.presentation || !alive(load) || (load !== toCenter && load !== fromCenter && !validate(load, true))) continue
+      if (!load.presentation || !alive(load) || (load !== toCenter && load !== fromCenter && !validate(load, true)))
+        continue
       const startSlot = start.get(load)
       const endSlot = end.get(load)
       const from = startSlot ? slotTransforms[startSlot] : { x: moveDirection * sideOffset, z: -rearDepth, scale: 0.62 }
       const to = endSlot ? slotTransforms[endSlot] : { x: -moveDirection * sideOffset, z: -rearDepth, scale: 0.62 }
-      participants.push({ load, from: { ...from }, to: { ...to }, startSlot, endSlot, yaw: load.yaw, pitch: load.pitch })
+      participants.push({
+        load,
+        from: { ...from },
+        to: { ...to },
+        startSlot,
+        endSlot,
+        yaw: load.yaw,
+        pitch: load.pitch,
+      })
     }
   }
 
@@ -841,19 +890,23 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       let x = from.x + (to.x - from.x) * e
       let z = from.z + (to.z - from.z) * e
 
-      if (projects.length === 2 && ((moveDirection === 1 && load === displayed) ||
-          (moveDirection === -1 && load === candidate))) {
+      if (
+        projects.length === 2 &&
+        ((moveDirection === 1 && load === displayed) || (moveDirection === -1 && load === candidate))
+      ) {
         if (moveDirection === 1) {
-          const theta = (3 * Math.PI / 2) * e
+          const theta = ((3 * Math.PI) / 2) * e
           x = -sideX * Math.sin(theta)
           z = -(rearZ / 2) * (1 - Math.cos(theta))
         } else {
-          const phi = (3 * Math.PI / 2) * (1 - e)
+          const phi = ((3 * Math.PI) / 2) * (1 - e)
           x = -sideX * Math.sin(phi)
           z = -(rearZ / 2) * (1 - Math.cos(phi))
         }
-      } else if (projects.length === 2 && ((moveDirection === 1 && load === candidate) ||
-                 (moveDirection === -1 && load === displayed))) {
+      } else if (
+        projects.length === 2 &&
+        ((moveDirection === 1 && load === candidate) || (moveDirection === -1 && load === displayed))
+      ) {
         if (moveDirection === 1) {
           const theta = (Math.PI / 2) * (1 - e)
           x = sideX * Math.sin(theta)
@@ -863,8 +916,13 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
           x = sideX * Math.sin(theta)
           z = -depthZ * (1 - Math.cos(theta))
         }
-      } else if (projects.length === 3 && part.startSlot && part.endSlot &&
-          part.startSlot !== 'center' && part.endSlot !== 'center') {
+      } else if (
+        projects.length === 3 &&
+        part.startSlot &&
+        part.endSlot &&
+        part.startSlot !== 'center' &&
+        part.endSlot !== 'center'
+      ) {
         const dir = moveDirection === 1 ? -1 : 1
         x = dir * sideX * Math.cos(Math.PI * e)
         z = -depthZ - (rearZ - depthZ) * Math.sin(Math.PI * e)
@@ -873,7 +931,7 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
         if (!part.startSlot && part.endSlot) {
           load.ditherUniform.value = motionPreference.matches ? 1.0 : e
         } else if (part.startSlot && !part.endSlot) {
-          load.ditherUniform.value = motionPreference.matches ? 0.0 : (1.0 - e)
+          load.ditherUniform.value = motionPreference.matches ? 0.0 : 1.0 - e
         }
       } else if (part.startSlot === 'center' || part.endSlot === 'center') {
         const arcDir = to.x > from.x ? 1 : -1
@@ -914,7 +972,7 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       const dt = lastDrawTimeMs !== null ? Math.min(100, animationNow - lastDrawTimeMs) : 16.67
       lastDrawTimeMs = animationNow
       let ditherActive = false
-      const ditherStep = motionPreference.matches ? 1.0 : (dt / 250)
+      const ditherStep = motionPreference.matches ? 1.0 : dt / 250
       for (const entry of catalog.values()) {
         if (entry.ditherFade < entry.ditherTarget) {
           entry.ditherFade = Math.min(entry.ditherTarget, entry.ditherFade + ditherStep)
@@ -924,7 +982,7 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
           entry.ditherFade = Math.max(entry.ditherTarget, entry.ditherFade - ditherStep)
           entry.ditherUniform.value = motionPreference.matches ? 0.0 : entry.ditherFade
           if (entry.ditherFade > entry.ditherTarget) ditherActive = true
-          if (entry.ditherFade === 0 && !participants.some(p => p.load === entry)) {
+          if (entry.ditherFade === 0 && !participants.some((p) => p.load === entry)) {
             if (entry.presentation) entry.presentation.visible = false
           }
         }
@@ -942,7 +1000,8 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
         return
       }
       if (candidate?.presentation && metadataReady && ticket) {
-        const hasMovement = displayed && displayed !== candidate && selection.request.direction !== null && !motionPreference.matches
+        const hasMovement =
+          displayed && displayed !== candidate && selection.request.direction !== null && !motionPreference.matches
         if (hasMovement) {
           if (!moving) {
             moving = true
@@ -961,7 +1020,8 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
             snapshotMovement(displayed!, candidate)
             emit('moving')
           }
-          const progress = moveDurationMs <= 0 ? 1 : Math.min(1, (animationNow - moveStartedAtAnimationMs) / moveDurationMs)
+          const progress =
+            moveDurationMs <= 0 ? 1 : Math.min(1, (animationNow - moveStartedAtAnimationMs) / moveDurationMs)
           if (progress < 1) {
             moveStage(progress)
             drawStage(candidate, progress)
@@ -984,13 +1044,16 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
           participants = []
           emit('ready')
           reportStage(displayed, null)
-          if (document.activeElement === canvas && !canvas.hasAttribute('data-pointer-focus')) acquireController('keyboard')
+          if (document.activeElement === canvas && !canvas.hasAttribute('data-pointer-focus'))
+            acquireController('keyboard')
         } else {
           metadataReady = false
           moving = false
           participants = []
-          if (displayed) { restStage(displayed); drawStage(displayed, null) }
-          else clearSurface()
+          if (displayed) {
+            restStage(displayed)
+            drawStage(displayed, null)
+          } else clearSurface()
         }
       } else if (displayed) {
         if (phase === 'ready') {
@@ -1004,7 +1067,7 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
               applyRotation(displayed)
             }
           } else if (activeControllers.size === 0 && displayed.savedYaw === null && !motionPreference.matches) {
-            displayed.yaw += (animationNow - displayed.lastAnimationTimeMs) * FULL_TURN / 24_000
+            displayed.yaw += ((animationNow - displayed.lastAnimationTimeMs) * FULL_TURN) / 24_000
             applyRotation(displayed)
           }
         }
@@ -1012,7 +1075,12 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
         drawStage(displayed, null)
       }
       if (displayed) displayed.lastAnimationTimeMs = animationNow
-      if (phase === 'ready' && activeControllers.size === 0 && (returning || (!motionPreference.matches && displayed?.savedYaw === null))) invalidate()
+      if (
+        phase === 'ready' &&
+        activeControllers.size === 0 &&
+        (returning || (!motionPreference.matches && displayed?.savedYaw === null))
+      )
+        invalidate()
     } catch (error) {
       if (gl.isContextLost()) stopRenderer('The graphics context was lost. Reload the page to view models again.')
       else fail(load, error)
@@ -1020,7 +1088,8 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
   }
 
   function invalidate(): void {
-    if (!disposed && !released && frame === null && (candidate?.presentation || displayed?.presentation)) frame = requestAnimationFrame(draw)
+    if (!disposed && !released && frame === null && (candidate?.presentation || displayed?.presentation))
+      frame = requestAnimationFrame(draw)
   }
 
   function resize(): void {
@@ -1034,7 +1103,8 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     focused = document.hasFocus()
     const animationNow = animationTime(performance.now())
     if (displayed && event?.type === 'change') displayed.lastAnimationTimeMs = animationNow
-    if (displayed && motionPreference.matches && activeControllers.size === 0) restoreInspection(displayed, animationNow)
+    if (displayed && motionPreference.matches && activeControllers.size === 0)
+      restoreInspection(displayed, animationNow)
     if (eligible()) invalidate()
     else cancelFrame()
   }
@@ -1046,13 +1116,17 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
   }
 
   function pointerDown(event: PointerEvent): void {
-    if (!event.isPrimary || event.button !== 0 || pointerId !== null || phase !== 'ready' || !displayed || !measure()) return
+    if (!event.isPrimary || event.button !== 0 || pointerId !== null || phase !== 'ready' || !displayed || !measure())
+      return
     const rect = canvas.getBoundingClientRect()
-    pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, 1 - (event.clientY - rect.top) / rect.height * 2)
+    pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, 1 - ((event.clientY - rect.top) / rect.height) * 2)
     scene.updateMatrixWorld(true)
     raycaster.setFromCamera(pointer, camera)
-    const visible = Array.from(catalog.values()).filter(load => load.presentation?.visible)
-    const hits = raycaster.intersectObjects(visible.map(load => load.presentation!), true)
+    const visible = Array.from(catalog.values()).filter((load) => load.presentation?.visible)
+    const hits = raycaster.intersectObjects(
+      visible.map((load) => load.presentation!),
+      true
+    )
     if (hits.length) {
       let object: Object3D | null = hits[0].object
       while (object?.parent && object.parent !== scene) object = object.parent
@@ -1070,10 +1144,13 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
 
   function pointerMove(event: PointerEvent): void {
     if (event.pointerId !== pointerId || !displayed || !(width > 0 && height > 0)) return
-    if ((event.buttons & 1) === 0) { endGesture(); return }
+    if ((event.buttons & 1) === 0) {
+      endGesture()
+      return
+    }
     event.preventDefault()
-    displayed.yaw += (event.clientX - pointerX) * FULL_TURN / width
-    displayed.pitch += (event.clientY - pointerY) * FULL_TURN / height
+    displayed.yaw += ((event.clientX - pointerX) * FULL_TURN) / width
+    displayed.pitch += ((event.clientY - pointerY) * FULL_TURN) / height
     pointerX = event.clientX
     pointerY = event.clientY
     rotate()
@@ -1083,7 +1160,9 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     if (event.pointerId === pointerId) endGesture()
   }
 
-  function clearPointerFocus(): void { delete canvas.dataset.pointerFocus }
+  function clearPointerFocus(): void {
+    delete canvas.dataset.pointerFocus
+  }
 
   function canvasFocus(): void {
     if (!canvas.hasAttribute('data-pointer-focus')) acquireController('keyboard')
@@ -1101,13 +1180,22 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
   function keyDown(event: KeyboardEvent): void {
     if (document.activeElement !== canvas || phase !== 'ready' || !displayed) return
     clearPointerFocus()
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown')
+      return
     acquireController('keyboard')
     switch (event.key) {
-      case 'ArrowLeft': displayed.yaw -= KEY_TURN; break
-      case 'ArrowRight': displayed.yaw += KEY_TURN; break
-      case 'ArrowUp': displayed.pitch -= KEY_TURN; break
-      case 'ArrowDown': displayed.pitch += KEY_TURN; break
+      case 'ArrowLeft':
+        displayed.yaw -= KEY_TURN
+        break
+      case 'ArrowRight':
+        displayed.yaw += KEY_TURN
+        break
+      case 'ArrowUp':
+        displayed.pitch -= KEY_TURN
+        break
+      case 'ArrowDown':
+        displayed.pitch += KEY_TURN
+        break
     }
     event.preventDefault()
     rotate()
@@ -1195,7 +1283,10 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       })
       const result = await loader.parseAsync(data, '')
       load.resources.track(result.scenes)
-      if (!alive(load)) { load.resources.retire(); return }
+      if (!alive(load)) {
+        load.resources.retire()
+        return
+      }
       load.result = result
       if (load.resourceError) throw new Error('An embedded model resource could not be decoded.')
       if (!result.scene) throw new Error('The model does not contain a displayable scene.')
@@ -1210,8 +1301,14 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       result.scene.updateMatrixWorld(true)
       bounds.setFromObject(result.scene, true)
       bounds.getBoundingSphere(sphere)
-      if (bounds.isEmpty() || !Number.isFinite(sphere.radius) || sphere.radius <= 0 ||
-          !Number.isFinite(sphere.center.x) || !Number.isFinite(sphere.center.y) || !Number.isFinite(sphere.center.z)) {
+      if (
+        bounds.isEmpty() ||
+        !Number.isFinite(sphere.radius) ||
+        sphere.radius <= 0 ||
+        !Number.isFinite(sphere.center.x) ||
+        !Number.isFinite(sphere.center.y) ||
+        !Number.isFinite(sphere.center.z)
+      ) {
         throw new Error('The model does not contain finite, nonempty geometry.')
       }
       const presentation = new Group()
@@ -1266,13 +1363,29 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
     const manager = new LoadingManager()
     const load: LoadContext = {
       requestId: 0,
-      modelId: project.id, abort: new AbortController(), manager, resources: createLoadResources(),
-      resourceError: false, result: null, presentation: null, rotation: null,
-      yaw: 0, pitch: 0, savedYaw: null, savedPitch: 0,
-      validated: { rendered: 'unvalidated', clay: 'unvalidated', wireframe: 'unvalidated' }, lastAnimationTimeMs: animationElapsedMs, retired: false, error: null,
-      ditherFade: 0, ditherTarget: 1, ditherUniform: { value: 0 },
+      modelId: project.id,
+      abort: new AbortController(),
+      manager,
+      resources: createLoadResources(),
+      resourceError: false,
+      result: null,
+      presentation: null,
+      rotation: null,
+      yaw: 0,
+      pitch: 0,
+      savedYaw: null,
+      savedPitch: 0,
+      validated: { rendered: 'unvalidated', clay: 'unvalidated', wireframe: 'unvalidated' },
+      lastAnimationTimeMs: animationElapsedMs,
+      retired: false,
+      error: null,
+      ditherFade: 0,
+      ditherTarget: 1,
+      ditherUniform: { value: 0 },
     }
-    manager.onError = () => { load.resourceError = true }
+    manager.onError = () => {
+      load.resourceError = true
+    }
     manager.setURLModifier((url) => {
       if (!/^data:|^blob:/i.test(url)) {
         load.resourceError = true
@@ -1304,7 +1417,10 @@ export function createModelViewer(canvas: HTMLCanvasElement, projects: readonly 
       selection = { request, deadlineAtMs: request.activatedAtMs === null ? null : request.activatedAtMs + 500 }
       ticket = { requestId: request.requestId, modelId: request.model.id }
       metadataReady = false
-      if (terminalError) { emit('unavailable', terminalError); return }
+      if (terminalError) {
+        emit('unavailable', terminalError)
+        return
+      }
       emit('loading')
       if (displayed?.modelId === request.model.id) {
         displayed.requestId = request.requestId

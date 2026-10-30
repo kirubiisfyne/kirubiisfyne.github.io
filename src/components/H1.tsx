@@ -1,7 +1,7 @@
 interface H1Props {
-  readonly id: string;
-  readonly label: string;
-  readonly artworkSrc: string;
+  readonly id: string
+  readonly label: string
+  readonly artworkSrc: string
 }
 
 export function H1({ id, label, artworkSrc }: H1Props) {
@@ -17,7 +17,9 @@ export function H1({ id, label, artworkSrc }: H1Props) {
           className="absolute -top-[24.394%] -left-[0.5163%] w-[100.595%] max-w-none"
         />
       </div>
-      <h1 id={id} className="text-[12px] leading-[16px]">{label}</h1>
+      <h1 id={id} className="text-[12px] leading-[16px]">
+        {label}
+      </h1>
     </div>
-  );
+  )
 }
