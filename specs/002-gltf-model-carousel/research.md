@@ -1,7 +1,7 @@
 # Research: Textured 3D Model Carousel
 
 **Date**: 2026-10-28
-**Status**: Technical decisions resolved and synchronized with GLB-only and updated Figma display-mode/hover clarifications. The supplied binary passed structural validation; runtime implementation and visual acceptance remain pending.
+**Status**: Technical decisions resolved. At runtime cutover, motion and selection clauses (no-spin, demand-only, single-resident, immediate-replacement, visible-metadata, loading-mode) are superseded by [003-carousel-interaction-motion](../003-carousel-interaction-motion/research.md).
 
 ## 1. Direct Three.js, lazy React adapter
 
@@ -17,7 +17,7 @@ Sources: [GLTFLoader](https://threejs.org/docs/pages/GLTFLoader.html), [React us
 
 ## 2. Renamed model root as Vite public assets
 
-**Decision**: Set `publicDir: 'glb'`. Recursively enumerate regular `.glb` files beneath that sole repository-root folder and inject serialized `__MODEL_PATHS__`. Normalize separators to `/`, sort by a case-sensitive code-unit comparator, and use relative paths as IDs. Ignore `.gltf`, `.bin`, and standalone images as entries. Discovery reads filenames only; malformed models remain selected-item errors. Missing/empty root means an empty catalog; do not follow directory symlinks or fall back to the former folder.
+**Decision**: Set `publicDir: 'glb'`. Recursively enumerate regular `.glb` files beneath that sole repository-root folder and inject serialized `__MODEL_PATHS__`. Normalize separators to `/`, sort by a case-sensitive code-unit comparator, and use relative paths as IDs. Ignore `.gltf`, `.bin`, and standalone images as entries. GLB discovery reads filenames only; optional adjacent `<stem>.description.txt` files supply trimmed per-path copy through `__MODEL_DESCRIPTIONS__` (owner-requested refinement). Missing/blank/symlinked descriptions have no caption. Malformed models remain selected-item errors. Missing/empty root means an empty catalog; do not follow directory symlinks or fall back to the former folder.
 
 **Rationale**: The owner explicitly chose `glb/` as the new root to match self-contained binary models and avoid naming conflicts, and has completed the rename. The supplied model is now at `glb/practice_axeTexture.glb`; no further asset move is required. Vite public-directory copying and the existing catalog constant still apply. A new build/start rescans; dev hot-discovery is not required.
 
@@ -101,7 +101,7 @@ Sources: [LoadingManager, including abort limitations](https://threejs.org/docs/
 
 **Assets**: [Carousel](design/carousel.png), [view variants](design/view-control-variants.png), and [navigation variants](design/navigation-variants.png) are design snapshots, not browser evidence. Fixed outlined [Clay](design/clay-label.svg), [Rendered](design/rendered-label.svg), and [Wireframe](design/wireframe-label.svg) labels were also exported from `I27:85;27:50`, `I27:89;27:50`, and `I27:93;27:50`. Reuse outlines/masks to preserve lettering without introducing an unverified font. Additional targeted metadata requests received API 429; PNG/SVG export succeeded. No prototype timing/easing was verified, so directly apply default/hover states with no invented timing.
 
-**Decision — UI state**: Use one native three-toggle group, Rendered initially, with exactly one pressed button and a persistent selected underline distinct from hover. Keep the selected mode through model navigation while preserving the existing orientation-reset rule. This is an explicitly chosen conventional default, not a claimed Figma selected variant. Enable mode controls only for the current ready model; one-model navigation remains disabled independently. Hover/focus never selects. Keyboard focus uses the hover-equivalent graphic plus an explicit ring; touch uses native click. Empty/loading/error cannot bypass asset validation.
+**Decision — UI state**: Use one native three-toggle group, Rendered initially, with exactly one pressed button. Owner-requested refinement replaces the original conventional selected underline with the existing outlined arrows animated toward/away from the stationary text; reduced motion keeps them inset and still. Keep the selected mode through model navigation while preserving the existing orientation-reset rule. This is not a claimed Figma selected variant. Enable modes only for the current ready model; one-model navigation remains disabled independently. Hover/focus never selects. Keyboard focus uses the hover-equivalent graphic plus an explicit ring; touch uses native click. Empty/loading/error cannot bypass asset validation.
 
 **Decision — rendering**: Expose runtime `setMode(DisplayMode)`, independent from model selection. Use `scene.overrideMaterial = null` for Rendered, a lazily allocated shared neutral-gray MeshStandardMaterial (initial `#BCBCBC`, roughness 0.85, metalness 0, no maps) for Clay, and a lazy shared MeshBasicMaterial (paper `#EBEBEB`, `wireframe: true`, no maps, unlit) for Wireframe. Original mesh material assignments remain unchanged, so authored appearance returns exactly and per-model disposal still finds all source textures/materials. Override resources live until runtime cleanup and are reused across selections. Same-mode activation does nothing; an actual change schedules one frame without refetch/reparse, geometry copy, camera reset, or new renderer.
 

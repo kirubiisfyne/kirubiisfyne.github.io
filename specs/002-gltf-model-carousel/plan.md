@@ -4,7 +4,7 @@
 
 **Branch**: Setup reports `002-gltf-model-carousel` as the feature context. This workflow does not create or switch a Git branch.
 
-**Status**: Planned; synchronized with the 2026-10-28 GLB-only and updated Figma display-mode/hover clarifications. Application implementation and browser acceptance are not yet performed.
+**Status**: Implemented and browser-verified on 2026-10-28. At runtime cutover, motion and selection clauses (no-spin, demand-only, single-resident, immediate-replacement, visible-metadata, loading-mode) are superseded by [003-carousel-interaction-motion](../003-carousel-interaction-motion/plan.md). All four stories are integrated; actual root/nested-base production evidence, lifecycle/error/race checks, and known limits are recorded in [quickstart.md](quickstart.md).
 
 ## Summary
 
@@ -28,7 +28,7 @@ Replace the static axe image with one reusable Three.js viewer inside the existi
 
 **Constraints**: No edits to `ascii-metaballs.js` or its mounting lifecycle. Keep body isolation, transparent page/viewer canvas, palette, highlights, headings, navigation focus, and content scale. Preserve authored PBR materials unchanged for Rendered; use temporary mode overrides only for requested Clay/Wireframe inspection. Apply the verified updated button artwork/hover states, not the old static button treatment. No invented production models or mode-based workaround for failed asset loading.
 
-**Scale/Scope**: One model carousel; catalog size determined by files, with no artificial item cap. The supplied `practice_axeTexture.glb` passed Khronos validation with zero errors/warnings and embeds its geometry and three textures. No missing-sidecar asset dependency remains; actual rendered appearance still requires browser acceptance.
+**Scale/Scope**: One model carousel; catalog size is determined by files, without an artificial item cap. The supplied `practice_axeTexture.glb` passed Khronos validation with zero errors/warnings, embeds geometry and three textures, and was subsequently browser-rendered with preserved source bytes. No sidecar prerequisite remains.
 
 ## Constitution Check
 
@@ -63,9 +63,9 @@ specs/002-gltf-model-carousel/
     └── wireframe-label.svg
 ```
 
-`tasks.md` is produced later by `/speckit.tasks`, not this command. Evidence files are added only after actual implementation verification.
+`tasks.md` tracks completed implementation. Actual browser captures are in `evidence/`, separate from saved Figma design exports.
 
-### Source Code (planned changes, not created by planning)
+### Implemented Source Code
 
 ```text
 glb/                               # existing sole asset root; owner rename complete
@@ -85,7 +85,7 @@ src/
 └── styles.css                     # scoped default/hover/focus/selected styles
 ```
 
-`PortfolioPage` keeps importing the readonly `projects` collection and composing the same carousel. No new page architecture is needed. During implementation update root README, affected original feature contracts/data model, and verification records; retain historical evidence with clear supersession notes.
+`PortfolioPage` still imports the readonly `projects` collection and composes the same carousel. Root README/context, affected original feature contracts/data model, and current verification records are updated; original screenshots/results remain explicitly historical.
 
 **Structure Decision**: One lazy React adapter and one imperative renderer module, not a generic rendering system. Keep the existing `Project` export and `projects` import boundary but replace their image-specific fields and implementation completely. Find references with the language server before changing exported contracts; migrate all callers and remove obsolete image/title imports and any now-unreferenced cutover assets after reference checks. Do not delete unrelated Figma exports.
 
@@ -107,7 +107,7 @@ See [research.md](research.md) for evidence, primary sources, alternatives, and 
 
 ### Build and asset boundary
 
-Keep discovery in `vite.config.ts`, using Node filesystem/path APIs and no extra scanner dependency. Enumerate `.glb` filenames only; malformed or non-self-contained binary models remain runtime per-entry errors, not catalog filters that silently hide them. The injected constant is `readonly string[]` in `src/vite-env.d.ts`. `src/data/projects.ts` derives one immutable `Project` per path. Use the full relative path as ID; display bracketed filename text and append parent-path context only for duplicate basenames. Associate the existing axe description with exact path `practice_axeTexture.glb`; no metadata entry is required for other models.
+Keep discovery in `vite.config.ts`, using Node filesystem/path APIs and no extra scanner dependency. Enumerate `.glb` filenames only; malformed or non-self-contained binary models remain runtime per-entry errors, not catalog filters that silently hide them. Inject readonly paths plus optional full-path-keyed descriptions into `src/vite-env.d.ts`. Read adjacent `<stem>.description.txt` files at startup/build, trim whitespace, and ignore missing/blank/symlinked sidecars. `src/data/projects.ts` derives one immutable `Project` per path. Use full relative paths as IDs, bracketed filename text, and parent context for duplicate basenames. Existing axe copy lives in its sidecar; no hardcoded source association or mandatory metadata.
 
 `publicDir` copies each binary model byte-for-byte to `dist/`, maintaining hierarchy for grouping, not sidecar dependencies. The owner has completed the rename to `glb/`; use only that existing root, with no old-folder alias or fallback. The feature identifier stays unchanged. Reserve the root for intended public assets, not site `index.html` or application bundles. Existing Pages workflow already publishes `dist/`; no deployment rewrite or further physical rename is needed.
 
@@ -115,7 +115,7 @@ Keep discovery in `vite.config.ts`, using Node filesystem/path APIs and no extra
 
 `ProjectCarousel` retains only active-index state, functional wrap updates, native disabled buttons, selection announcement, and coherent title/description. Replace outlined per-project title artwork with actual styled text so arbitrary model filenames render without asset exports. Keep the existing typography family/spacing rather than adding an unverified font to imitate outlined lettering.
 
-`ModelViewer` additionally owns coarse `mode` state initialized to Rendered. Its three-button `ViewModeControls` group appears below the canvas and above the carousel description, in Clay → Rendered → Wireframe order. Use native buttons with `aria-pressed`, a persistent selected underline independent of transient hover, and shared Figma-derived label artwork. Disable mode controls until the current model is ready; a healthy single-item catalog still enables them. The mode is not keyed to model ID and is not a persisted browser preference.
+`ModelViewer` additionally owns coarse `mode` state initialized to Rendered. Its three-button `ViewModeControls` group appears below the canvas and above the carousel description, in Clay → Rendered → Wireframe order. Use native buttons with `aria-pressed` and shared Figma-derived label artwork. The selected mode's existing arrows move inward/outward around stationary text; reduced motion keeps them statically inset. This direct owner refinement replaces the original underline. Disable mode controls until the current model is ready; a healthy single-item catalog still enables them. The mode is not keyed to model ID and is not a persisted browser preference.
 
 Declare `React.lazy` for `ModelViewer` at module scope; use a small Suspense surface and narrow viewer-module error boundary. Mount no renderer for an empty catalog; show disabled mode controls with the empty presentation if they remain in layout. Do not key the viewer by model ID: one canvas/context persists through selections. `ModelViewer` has a lifetime effect owning runtime/disposal, a selection effect calling `select`, and a primitive mode effect calling `setMode`. Mode changes never rerun the lifetime/selection effect. Model-tagged status prevents stale-ready UI; initialization/context loss remain readable unavailable states.
 
@@ -161,6 +161,6 @@ FR-001–004 cover artwork/materials/lighting/framing; FR-005–006 rotation/acc
 - No application code changed and no model was browser-rendered during planning or this clarification.
 - Updated Figma full-file metadata and nine design exports (three PNG, six SVG) were inspected. They confirm both reusable component sets, all three mode instances, row placement, dimensions, fixed label outlines, and hover fill/blend styling. Targeted metadata follow-ups hit API 429; image/vector exports succeeded. Prototype timing and actual application hover/mode behavior are not claimed as verified.
 
-## Planning Completion
+## Implementation Completion
 
-Research, entity/state design, UI/asset contracts, and runnable verification instructions accompany this plan. No extension hook configuration or agent-context updater script is installed; maintain concise pending-feature context directly in `AGENTS.md`. No open technical clarification or constitution exception remains. Next command: `/speckit.tasks`.
+The planned viewer, automatic GLB catalog, full-turn input, reversible modes, and updated controls are implemented. Root type-check/build and actual desktop/mobile production previews passed; a separate `/portfolio/` build/preview loaded two distinct textured fixtures with unchanged copied/served bytes. Verification also covered empty/one/error selections, ten out-of-order loads, late decode disposal, Strict Mode and unmount ownership, and preserved background behavior. See [quickstart.md](quickstart.md) for exact observations, screenshots, the lazy-chunk warning, browser/device limits, and Vite's literal-`#` filename limitation. Temporary assets/harnesses/services were removed; only the supplied axe ships. No extension hook or adopted-constitution exception was introduced.

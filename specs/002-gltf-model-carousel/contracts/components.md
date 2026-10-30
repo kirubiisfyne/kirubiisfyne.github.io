@@ -1,5 +1,7 @@
 # UI and Runtime Contracts
 
+
+*Note*: At runtime cutover, motion and selection clauses (no-spin, demand-only, single-resident, immediate-replacement, visible-metadata, loading-mode) are superseded by [003-carousel-interaction-motion component contracts](../../003-carousel-interaction-motion/contracts/components.md). Navigation appearance, mode controls, discovery, and lighting contracts remain intact.
 These contracts supersede only the static-image/manual-project parts of the original portfolio contract. Other heading, page, and background contracts remain unchanged.
 
 ## ProjectCarousel
@@ -23,7 +25,7 @@ These contracts supersede only the static-image/manual-project parts of the orig
 **Props**: readonly `model: Project`.
 
 - Reusable independently of portfolio page content. A focusable canvas has a descriptive accessible name such as `3D model: <title>` and instructions linked with `aria-describedby`; use a focusable interactive-region semantic, not `role="application"` or decorative-only image semantics.
-- Visible concise instruction: drag to rotate; use arrow keys when focused. A visible focus indicator applies to the canvas, not only the existing global button selector. Tab and Shift+Tab leave normally.
+- Visible concise instruction: drag to rotate; use arrow keys when focused. Pointer focus remains available for arrow rotation but suppresses the canvas outline; a keyboard event or leaving and returning with Tab restores visible keyboard focus. Tab and Shift+Tab leave normally.
 - Status is native text with a polite accessible loading/error announcement; do not expose a constantly changing canvas pixel buffer as live content. Canvas remains empty/hidden as appropriate when unavailable; selected title remains outside it.
 - A lifetime effect initializes `createModelViewer` after lazy module load and returns its disposer. A selection effect calls `select` when model identity/URL changes, after runtime initialization. Use stable primitive dependencies and a stable state callback; no unrelated copy object should recreate the renderer.
 - Persistent renderer across model changes. Only coarse model-tagged status and selected mode belong in React state; derive loading on a selected-ID mismatch to avoid a stale-ready flash before effects run.
@@ -41,7 +43,7 @@ These contracts supersede only the static-image/manual-project parts of the orig
 - Source set `27:82`, Default `27:81`, OnHover `27:83`; carousel instances Clay `27:85`, Rendered `27:89`, Wireframe `27:93`. This is one reusable visual treatment instantiated three times, not three independent modes that can be active together.
 - Source row: full MainCard width, centered, height 32, horizontal padding 64, gaps 64, three 158.67-wide buttons; generic label frame is about 14 high. Default has no paper bar, hover adds `#EBEBEB` with white glyphs using difference blending. Preserve label artwork `> Clay <`, `> Rendered <`, `> Wireframe <` via the exported outlined SVGs, not a new font dependency.
 - Keep the glyph/label layer and background separate so difference blending applies inside an isolated button only, not to the metaballs/page. No invented bevel, shadow, or prototype animation duration: the SVG source specifies flat fill/blending. Hover/focus never activates the mode.
-- Pointer/touch click and Enter/Space choose a mode; focus stays on the activated button. Keyboard focus gets the hover-equivalent treatment plus a visible focus ring. The selected mode keeps a persistent underline after hover ends; this selected treatment is an explicit accessible default because Figma defines no selected variant.
+- Pointer/touch click and Enter/Space choose a mode; focus stays on the activated button. Keyboard focus gets the hover-equivalent treatment plus a visible focus ring. Replace the selected underline with the existing outlined flanking arrows moving outward from the label by 8 pixels across stepped ticks (750 ms, steps(3, jump-none)); text remains stationary. Animate only the selected enabled mode. Reduced motion keeps its arrows statically stepped outward by 8 pixels, preserving a visible distinction without motion. This owner-requested refinement supersedes smooth easing and the earlier underline, without altering the Figma hover artwork.
 - Disabled buttons never appear actionable or activate, but selected-state semantics remain coherent. On narrow screens reduce source padding/gaps, then wrap/stack in order without truncating the longest Wireframe label or introducing horizontal page overflow. Do not force the 32-pixel desktop row height after wrapping.
 - Only mode state changes on activation; the buttons never mutate the Project, advance the carousel, capture viewer rotation gestures, or load a model.
 

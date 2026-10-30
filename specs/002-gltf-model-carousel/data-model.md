@@ -1,5 +1,7 @@
 # Data Model: Textured 3D Model Carousel
 
+
+*Note*: At runtime cutover, motion and selection clauses (no-spin, demand-only, single-resident, immediate-replacement, visible-metadata, loading-mode) are superseded by [003-carousel-interaction-motion data model](../003-carousel-interaction-motion/data-model.md). Unrelated asset and catalog contracts remain intact.
 ## Build-time model paths
 
 `__MODEL_PATHS__: readonly string[]` is injected by Vite configuration, declared in `src/vite-env.d.ts`, and consumed only to derive the module-level readonly catalog.
@@ -8,11 +10,13 @@
 - POSIX separators, no leading slash or `glb/` prefix, no absolute local paths. Relative IDs remain stable when only the catalog root is renamed.
 - Exact case is preserved; order is ascending code-unit comparison, not locale sorting.
 - Root missing/empty means an empty array; ignore directory symlinks.
-- Discovery reads filenames only. A malformed or externally referencing `.glb` remains an entry that reports unavailable when selected, rather than disappearing silently.
+- GLB discovery reads filenames only, not binary contents. Optional neighboring description text is read separately; malformed or externally referencing `.glb` files remain entries that report unavailable when selected, rather than disappearing silently.
 - `.gltf`, `.bin`, standalone images, directories, and other files are never entries.
 - Snapshot is fixed for a deployed build or dev-server process; restart/rebuild to rescan.
 
 No generated tracked manifest or registration file exists.
+
+`__MODEL_DESCRIPTIONS__: Readonly<Record<string, string | undefined>>` is a second Vite-injected snapshot. Keys are exact relative GLB paths; values are trimmed text from adjacent `<stem>.description.txt` files. Missing/blank/symlinked sidecars produce no value; orphan files do not affect membership. Rebuild/restart to update copy. All sidecars are public through `publicDir`.
 
 ## Project
 
@@ -23,11 +27,11 @@ Keep the existing exported `Project` symbol in `src/types/project.ts`; replace i
 | `id` | readonly string | Exact relative model path; unique and stable across builds unless the path changes. |
 | `title` | readonly string | Filename including `.glb`; add parent-path context for duplicate basenames. The UI brackets it for the existing title treatment. |
 | `modelUrl` | readonly string | Vite base plus each encoded path segment; public root mapping, not an extra `glb/` URL prefix. |
-| `description` | readonly optional string | Existing supplied copy only for exact path `practice_axeTexture.glb`; absent for unknown models. |
+| `description` | readonly optional string | Plain text from that model's optional adjacent `.description.txt` file; no hardcoded axe fallback or borrowed copy. |
 
 The module-level `projects: readonly Project[]` in `src/data/projects.ts` derives this shape from the injected path list, not a handwritten project array. The existing page import and carousel prop boundary remain. Remove `titleImageSrc`, `imageSrc`, and `imageAlt` rather than retaining deprecated aliases. Accessible model identity comes from the generated title and viewer instructions/status.
 
-No mandatory per-model metadata, title SVG, image fallback, or custom lighting configuration is required. The optional axe-copy association never determines catalog membership. No content is persisted remotely or in local storage.
+No mandatory per-model metadata, title SVG, image fallback, or custom lighting configuration is required. Optional description files never determine catalog membership. No content is persisted remotely or in local storage.
 
 ## Carousel selection
 
@@ -52,7 +56,7 @@ Only `activeIndex: number` is React carousel state. The readonly collection is s
 
 - `ModelViewer` owns coarse React `mode` state; the runtime retains the same desired mode through `setMode`. No mode value changes per frame.
 - Mode survives next/previous model selection for the mounted carousel. Model orientation still resets per selection; a new mount resets mode to Rendered. No browser preference storage or per-model remembered mode.
-- Exactly one mode button has `aria-pressed=true` and a persistent selected underline; hover/focus is transient and does not select. Native activation changes mode without moving focus.
+- Exactly one mode button has `aria-pressed=true`; its outlined arrows move inward/outward while the label stays still. Reduced motion keeps the selected arrows inset without animation. Hover/focus is transient and does not select. Native activation changes mode without moving focus.
 - Controls are enabled only when the current model is ready, including a healthy single-model catalog. Loading/empty/error disables them; mode is retained but cannot mask a failed load.
 - Mode changes preserve model ID, loaded resources, original materials, geometry, yaw/pitch, and camera fit. Same-mode activation is a no-op; a different mode invalidates one demand frame, never a model fetch/parse or renderer mount.
 

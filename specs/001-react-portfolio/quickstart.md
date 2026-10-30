@@ -1,6 +1,6 @@
 # Quickstart and Verification
 
-**Status**: Implemented and browser-verified on 2026-10-28.
+**Status**: Historical static-portfolio verification from 2026-10-28. The live model carousel now supersedes the image/manual-data contract; current scenarios and screenshots are in [feature 002](../002-gltf-model-carousel/quickstart.md).
 
 ## Run
 
@@ -21,7 +21,7 @@ npm run preview -- --host 127.0.0.1
 
 Open the URL printed by Vite. `build` emits `dist/`; `typecheck` is a separate command.
 
-## Verification Record
+## Historical Verification Record — Initial Static Portfolio
 
 ### Commands exercised
 
@@ -68,7 +68,7 @@ The production screenshots and detailed measurements earlier in this record desc
 
 ## Rechecking Behavior
 
-Use [component contracts](contracts/components.md) and [data model](data-model.md) for expected behavior. The production collection intentionally has one item, so multi-item/empty/broken-image checks require an isolated temporary harness with distinct records; do not add demonstration projects to `src/data/projects.ts`.
+Use the updated [component contracts](contracts/components.md), [data model](data-model.md), and [current model-carousel verification guide](../002-gltf-model-carousel/quickstart.md). Production currently has one discovered self-contained GLB; use isolated temporary textured-model folders/harnesses for multi-item/empty/error checks. Do not add demonstration portfolio work or manual project registration. A healthy page now has one background and one viewer canvas; the one-canvas assertions/screenshots above remain historical.
 
 ## Limits and Intentional Constraints
 

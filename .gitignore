@@ -8,3 +8,6 @@ build/
 Thumbs.db
 *.tmp
 *.swp
+test-results/
+playwright-report/
+blob-report/

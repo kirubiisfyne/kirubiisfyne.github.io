@@ -3,11 +3,11 @@
 const METABALL_CONFIG = {
   backgroundColor: '2', // Any CSS color, including 'transparent'.
   asciiColor: '#EBEBEB',      // Six-digit hex: #RRGGBB.
-  deformSpeed: 1,            // Animation multiplier; 0 freezes deformation.
+  deformSpeed: 1.2,            // Animation multiplier; 0 freezes deformation.
   maxAlpha: 0.3,            // 0–1: maximum glyph opacity.
   // ~70% occupied cells at 1440x900; motion and aspect ratio affect coverage.
-  blobDiameterMin: 0.47,    // >= 0: fraction of shorter viewport side; 0.1 = 10%.
-  blobDiameterMax: 0.53,    // >= min; set both equal for a fixed diameter.
+  blobDiameterMin: 0.2,    // >= 0: fraction of shorter viewport side; 0.1 = 10%.
+  blobDiameterMax: 0.4,    // >= min; set both equal for a fixed diameter.
   // These size individual field sources; merged shapes can appear larger.
 
   cornerMaskEnabled: false, // Enable only for corner coverage (at most 50%).

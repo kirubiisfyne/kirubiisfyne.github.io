@@ -22,16 +22,17 @@ Props: readonly `id: string`, `label: string`, `artworkSrc: string`, `descriptio
 
 ## ProjectCarousel
 
-Module: `src/components/ProjectCarousel.tsx`.
+Module: `src/components/ProjectCarousel.tsx`. The static-image presentation is superseded by [feature 002 UI/runtime contracts](../../002-gltf-model-carousel/contracts/components.md).
 
-Props: readonly `projects: readonly Project[]`, using [data-model.md](../data-model.md).
+Props: readonly `projects: readonly Project[]`, using the updated [data-model.md](../data-model.md).
 
-- Named region `Projects`; native `button type="button"` controls named `Previous project` and `Next project`.
-- Tab focus is visible; Enter/Space activate buttons. Changing selection never moves focus away from the activated button. Announce the new selection with a concise polite status without making all decorative artwork live.
-- Initial card is the first item. Both directions wrap for multiple items; both controls are disabled for zero/one. Empty input omits the card.
-- Render the selected title's outlined SVG as decoration alongside equivalent accessible title text; artwork is a normal image with `imageAlt`; description is native text. Every visible field belongs to the same selected project.
-- Match Figma `11:39`: row with 32-pixel gaps, 732-pixel desktop main card, original previous/next artwork, and the supplied image's reference proportions/crop. Responsive layout must keep controls reachable and text readable without page overflow.
-- No autoplay, routing, external requests, or persistent selection. No additional gesture contract.
+- Named region `Projects`; native controls named `Previous project` and `Next project`. Visible focus, Enter/Space activation, functional wrapping, and activation focus retention remain.
+- Initial card is the first entry. Navigation is disabled for zero/one; empty input shows `No models available` and mounts no Three.js renderer.
+- Bracketed native filename title, optional description, viewer selection, and polite position announcement derive from one record. One module-scope lazy `ModelViewer` replaces static title/image exports, with local loading/module-unavailable UI.
+- Retain the 732-source-pixel desktop card and transparent page composition. Title/media/mode row/description grow naturally; updated native navigation uses fixed footprints, mirrored previous glyphs, and local paper-bar/difference-blend hover/focus artwork. Narrow controls wrap without clipping or page overflow.
+- The focusable named canvas supports unrestricted pointer/touch rotation and focused 5° arrow steps, linked visible instructions, and normal Tab exit. One transparent demand-rendered runtime persists through selections.
+- Clay, Rendered (initial), and Wireframe are exclusive native pressed buttons. Modes preserve pose and source materials without refetching; selection resets orientation and retains mode. Loading/error disables modes independently of healthy one-item navigation.
+- Fetch only the selected self-contained local GLB; show readable failures and permit navigation away. No external model sidecars, autoplay, routing, preferences, or wheel-driven navigation.
 
 ## MetaballBackground
 
@@ -39,7 +40,7 @@ Module: `src/components/MetaballBackground.tsx`; renders `null` and takes no pro
 
 - One effect calls the unchanged `mountAsciiMetaballs(document.body)` export and returns its disposer.
 - `body` keeps `isolation: isolate`; the original renderer owns the fixed negative-z-index, pointer-transparent, aria-hidden canvas.
-- React Strict Mode setup/cleanup/remount must leave one canvas, not two. Unmount removes the canvas and its listeners/animation scheduling through the existing disposer.
+- React Strict Mode setup/cleanup/remount leaves one background canvas. A healthy viewer adds its own second canvas; this is not a duplicate background. Background unmount removes only its canvas/listeners/animation scheduling through the existing disposer.
 - Keep all renderer settings, reduced-motion handling, pointer behavior, and palette unchanged. Remove the old inline mount in `index.html` during React cutover.
 
 ## PortfolioPage and entry

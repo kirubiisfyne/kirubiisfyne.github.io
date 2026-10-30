@@ -1,0 +1,433 @@
+{
+  "environment": {
+    "browser": "Chromium; actual compositor timestamp correlation checked",
+    "touch": "Chrome native touch emulation; not physical hardware",
+    "hiddenViewport": {
+      "width": 561,
+      "height": 969,
+      "nativeHeaded": true
+    },
+    "referenceBackdrop": "Temporary opaque black only for isolated model pixel comparisons; source production transparency unchanged"
+  },
+  "spin": [
+    {
+      "mode": "Rendered",
+      "width": 375,
+      "periodMs": 23994.01708984375,
+      "referenceMeanAbsoluteDifference": 0.0009063473238648964,
+      "quarters": [
+        {
+          "elapsed": 6010.384033203125,
+          "difference": 10.525199348201287
+        },
+        {
+          "elapsed": 12011.0859375,
+          "difference": 2.0103651422676037
+        },
+        {
+          "elapsed": 18010.681884765625,
+          "difference": 8.37686693085727
+        }
+      ]
+    },
+    {
+      "mode": "Clay",
+      "width": 375,
+      "periodMs": 23993.255859375,
+      "referenceMeanAbsoluteDifference": 0.0018801885973793063,
+      "quarters": [
+        {
+          "elapsed": 6010.15185546875,
+          "difference": 12.253073385207255
+        },
+        {
+          "elapsed": 12009.626953125,
+          "difference": 13.733938850481618
+        },
+        {
+          "elapsed": 18009.43896484375,
+          "difference": 15.191866014867953
+        }
+      ]
+    },
+    {
+      "mode": "Wireframe",
+      "width": 375,
+      "periodMs": 23998.155029296875,
+      "referenceMeanAbsoluteDifference": 0.01463654508113737,
+      "quarters": [
+        {
+          "elapsed": 6000.05615234375,
+          "difference": 17.32645859246189
+        },
+        {
+          "elapsed": 12015.546142578125,
+          "difference": 16.240490584594024
+        },
+        {
+          "elapsed": 18015.142333984375,
+          "difference": 17.723467646293138
+        }
+      ]
+    },
+    {
+      "mode": "Rendered",
+      "width": 1280,
+      "periodMs": 23999.218017578125,
+      "referenceMeanAbsoluteDifference": 0.0016327944899373471,
+      "quarters": [
+        {
+          "elapsed": 6016.132080078125,
+          "difference": 10.463569377855093
+        },
+        {
+          "elapsed": 12015.94921875,
+          "difference": 8.068973368973369
+        },
+        {
+          "elapsed": 18015.718017578125,
+          "difference": 9.062774548488834
+        }
+      ]
+    },
+    {
+      "mode": "Clay",
+      "width": 1280,
+      "periodMs": 23999.653076171875,
+      "referenceMeanAbsoluteDifference": 0,
+      "quarters": [
+        {
+          "elapsed": 6016.923828125,
+          "difference": 21.193818150961008
+        },
+        {
+          "elapsed": 12016.35595703125,
+          "difference": 13.547138189995334
+        },
+        {
+          "elapsed": 18016.215087890625,
+          "difference": 20.48439687725402
+        }
+      ]
+    },
+    {
+      "mode": "Wireframe",
+      "width": 1280,
+      "periodMs": 23999.59814453125,
+      "referenceMeanAbsoluteDifference": 0,
+      "quarters": [
+        {
+          "elapsed": 6016.330078125,
+          "difference": 6.124317960032246
+        },
+        {
+          "elapsed": 12016.2470703125,
+          "difference": 6.282576689719547
+        },
+        {
+          "elapsed": 18016.407958984375,
+          "difference": 5.923982773982774
+        }
+      ]
+    }
+  ],
+  "inspection": [
+    {
+      "kind": "keyboard-pointer",
+      "width": 375,
+      "observedReturnMs": 353.0958496183157,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.46779092302797143
+    },
+    {
+      "kind": "reverse-release",
+      "width": 375,
+      "observedReturnMs": 340.92778320610523,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.3878588026573332
+    },
+    {
+      "kind": "regrab",
+      "width": 375,
+      "observedReturnMs": 337.59287109971046,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.5203687098049424
+    },
+    {
+      "kind": "full-turns",
+      "width": 375,
+      "observedReturnMs": 353.04096679389477,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.40715243026428705
+    },
+    {
+      "kind": "pointer-only",
+      "width": 375,
+      "observedReturnMs": 342.39594726264477,
+      "heldDifference": null,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.2996731364438402
+    },
+    {
+      "kind": "keyboard-pointer",
+      "width": 1280,
+      "observedReturnMs": 353.33100585639477,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.3729793688556575
+    },
+    {
+      "kind": "reverse-release",
+      "width": 1280,
+      "observedReturnMs": 356.80595703423023,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.384746925468575
+    },
+    {
+      "kind": "regrab",
+      "width": 1280,
+      "observedReturnMs": 366.08203125,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.4105295620759538
+    },
+    {
+      "kind": "full-turns",
+      "width": 1280,
+      "observedReturnMs": 362.99702148139477,
+      "heldDifference": 0,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.20271452487947333
+    },
+    {
+      "kind": "pointer-only",
+      "width": 1280,
+      "observedReturnMs": 361.56083984673023,
+      "heldDifference": null,
+      "endpointMeanAbsoluteDifference": 0,
+      "oneDegreeCalibration": 0.09764674043024558
+    }
+  ],
+  "inactiveRegression": {
+    "beforeVisibleMs": 566.551025390625,
+    "afterVisibleMs": 343.82109375298023,
+    "pauseMs": 824.2999999970198
+  },
+  "genuineHidden": {
+    "visibleReturnMs": 360.70898438990116,
+    "pauseMs": 838.3999999910593,
+    "wallReturnMs": 1199.1089843809605,
+    "endpointMeanAbsoluteDifference": 0,
+    "events": [
+      {
+        "type": "pointerup",
+        "at": 423888.700000003,
+        "visible": "visible",
+        "focus": true
+      },
+      {
+        "type": "canvas-blur",
+        "at": 424122.59999999404,
+        "visible": "visible",
+        "focus": true
+      },
+      {
+        "type": "window-blur",
+        "at": 424255.90000000596,
+        "visible": "visible",
+        "focus": false
+      },
+      {
+        "type": "visibility",
+        "at": 424256.09999999404,
+        "visible": "hidden",
+        "focus": false
+      },
+      {
+        "type": "visibility",
+        "at": 425094.09999999404,
+        "visible": "visible",
+        "focus": false
+      },
+      {
+        "type": "window-focus",
+        "at": 425094.299999997,
+        "visible": "visible",
+        "focus": true
+      }
+    ],
+    "firstCompositorMetadata": {
+      "offsetTop": 0,
+      "pageScaleFactor": 1,
+      "deviceWidth": 561,
+      "deviceHeight": 969,
+      "scrollOffsetX": 0,
+      "scrollOffsetY": 234.5,
+      "timestamp": 1793255008.818991,
+      "monotonicTimestamp": 88984.400422
+    }
+  },
+  "gates": [
+    {
+      "kind": "offscreen",
+      "width": 375,
+      "visibleReturnMs": 368.85898438096046,
+      "pauseMs": 816.2999999970198,
+      "endpointMeanAbsoluteDifference": 0
+    },
+    {
+      "kind": "zero-size",
+      "width": 375,
+      "visibleReturnMs": 369.42500001192093,
+      "pauseMs": 816.5999999940395,
+      "endpointMeanAbsoluteDifference": 0
+    },
+    {
+      "kind": "live-reduce",
+      "width": 375,
+      "visibleReturnMs": 172.42817382514477,
+      "pauseMs": 0,
+      "endpointMeanAbsoluteDifference": 0
+    },
+    {
+      "kind": "offscreen",
+      "width": 1280,
+      "visibleReturnMs": 358.50493164360523,
+      "pauseMs": 816.7000000029802,
+      "endpointMeanAbsoluteDifference": 0
+    },
+    {
+      "kind": "zero-size",
+      "width": 1280,
+      "visibleReturnMs": 356.59584960341454,
+      "pauseMs": 816.7000000029802,
+      "endpointMeanAbsoluteDifference": 0
+    },
+    {
+      "kind": "live-reduce",
+      "width": 1280,
+      "visibleReturnMs": 161.06098632514477,
+      "pauseMs": 0,
+      "endpointMeanAbsoluteDifference": 0
+    }
+  ],
+  "reduced": [
+    {
+      "width": 375,
+      "firstPresentedRestoreMs": 23.419091805815697,
+      "animatedIntermediateViews": 0,
+      "heldDifference": 0
+    },
+    {
+      "width": 1280,
+      "firstPresentedRestoreMs": 24.619970709085464,
+      "animatedIntermediateViews": 0,
+      "heldDifference": 0
+    }
+  ],
+  "initialReduced": [
+    {
+      "width": 375,
+      "height": 832,
+      "reduced": true,
+      "state": "ready",
+      "position": "1 of 1: practice_axeTexture.glb",
+      "canvasCount": 2,
+      "stationaryMeanAbsoluteDifference": 0
+    },
+    {
+      "width": 1280,
+      "height": 832,
+      "reduced": true,
+      "state": "ready",
+      "position": "1 of 1: practice_axeTexture.glb",
+      "canvasCount": 2,
+      "stationaryMeanAbsoluteDifference": 0
+    }
+  ],
+  "touch": {
+    "inspectionMeanAbsoluteDifference": 11.068371370994956,
+    "exactReturnMs": 412.93183593451977,
+    "events": [
+      {
+        "type": "pointerdown",
+        "at": 753.3000000119209,
+        "x": 187.5,
+        "y": 381.796875,
+        "buttons": 1,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": false
+      },
+      {
+        "type": "pointermove",
+        "at": 812.4000000059605,
+        "x": 203.10000610351562,
+        "y": 399.796875,
+        "buttons": 1,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": false
+      },
+      {
+        "type": "pointermove",
+        "at": 874.7000000029802,
+        "x": 218.6999969482422,
+        "y": 417.796875,
+        "buttons": 1,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": false
+      },
+      {
+        "type": "pointermove",
+        "at": 925,
+        "x": 234.3000030517578,
+        "y": 435.796875,
+        "buttons": 1,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": false
+      },
+      {
+        "type": "pointermove",
+        "at": 974.9000000059605,
+        "x": 249.89999389648438,
+        "y": 453.796875,
+        "buttons": 1,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": false
+      },
+      {
+        "type": "pointercancel",
+        "at": 1063.2000000029802,
+        "x": 249.89999389648438,
+        "y": 453.796875,
+        "buttons": 0,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": true
+      },
+      {
+        "type": "lostpointercapture",
+        "at": 1063.2000000029802,
+        "x": 249.89999389648438,
+        "y": 453.796875,
+        "buttons": 0,
+        "primary": true,
+        "pointerType": "touch",
+        "requested": true
+      }
+    ],
+    "outsideScroll": {
+      "before": 100,
+      "after": 310
+    }
+  }
+}

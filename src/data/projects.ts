@@ -1,14 +1,22 @@
 import type { Project } from '../types/project';
-import titleImage from '../assets/figma/project-title.svg';
-import axeImage from '../assets/figma/practice-axe.png';
 
-export const projects: readonly Project[] = [
-  {
-    id: 'practice-axe',
-    title: 'practice_axe.fbx',
-    titleImageSrc: titleImage,
-    imageSrc: axeImage,
-    imageAlt: '3D render of a weathered axe with a rusted metal blade and wooden handle',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  },
-];
+const filenameCounts = new Map<string, number>();
+for (const path of __MODEL_PATHS__) {
+  const filename = path.slice(path.lastIndexOf('/') + 1);
+  filenameCounts.set(filename, (filenameCounts.get(filename) ?? 0) + 1);
+}
+
+export const projects: readonly Project[] = __MODEL_PATHS__.map((path) => {
+  const separator = path.lastIndexOf('/');
+  const filename = path.slice(separator + 1);
+  const parent = separator === -1 ? '.' : path.slice(0, separator);
+  const title = filenameCounts.get(filename)! > 1 ? `${filename} (${parent})` : filename;
+  const modelUrl = import.meta.env.BASE_URL + path.split('/').map(encodeURIComponent).join('/');
+
+  return {
+    id: path,
+    title,
+    modelUrl,
+    ...(__MODEL_DESCRIPTIONS__[path] ? { description: __MODEL_DESCRIPTIONS__[path] } : {}),
+  };
+});

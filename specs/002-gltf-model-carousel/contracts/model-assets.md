@@ -27,12 +27,12 @@ Only owner-supplied real work ships. Temporary validation models must be removed
 
 ## Discovery and identity
 
-- At dev-server start or production build, scan filenames recursively and serialize sorted relative model paths into `__MODEL_PATHS__`.
+- At dev-server start or production build, scan filenames recursively and serialize sorted relative model paths into `__MODEL_PATHS__`. Read optional adjacent UTF-8 `<stem>.description.txt` files into `__MODEL_DESCRIPTIONS__`, keyed by complete relative GLB path.
 - Sort case-sensitively by code-unit ordering of POSIX relative paths. No OS traversal order, locale-dependent sort, manually curated array, or mandatory metadata file.
 - A path is a stable catalog identity. Renaming/moving a file changes that identity; removing it removes the entry on next build.
 - Each `.glb` yields exactly one entry regardless of how many meshes/scenes it contains. Distinct paths with the same basename remain distinct; append parent-path context to their visible filename titles.
 - Keep corrupt, truncated, or non-self-contained binary entries visible with a selected-item error. Do not silently filter the catalog down to only models that happen to load.
-- The existing axe's supplied description may be associated with exact path `practice_axeTexture.glb`; other entries work without a description or title artwork.
+- Each model may have a plain-text description in an adjacent file replacing `.glb` with `.description.txt` (for example, `axes/model.glb` → `axes/model.description.txt`). Trim surrounding whitespace; missing, blank, and symlinked files mean no caption. Directory entries are ignored; non-missing read errors fail configuration rather than silently dropping copy. No HTML interpretation or runtime metadata fetch. Duplicate basenames remain independent by full path. Orphan description files are not entries. Existing axe copy is migrated unchanged to its sidecar, with no source-code fallback.
 
 ## URL and build contract
 
@@ -43,16 +43,17 @@ Only owner-supplied real work ships. Temporary validation models must be removed
 | `glb/practice_axeTexture.glb` | `/practice_axeTexture.glb` | `/portfolio/practice_axeTexture.glb` |
 | `glb/another-project/model.glb` | `/another-project/model.glb` | `/portfolio/another-project/model.glb` |
 
-Client URLs prepend `import.meta.env.BASE_URL` and encode individual relative-path segments. Fetch only the selected `.glb`; verify binary framing and parse its embedded resources with `GLTFLoader.parseAsync`. The loader's pre-dependency packaging check rejects external buffer/image URIs, and the parse manager blocks network resource URLs. No buffer/texture path rewriting or separate asset requests are needed.
+Client URLs prepend `import.meta.env.BASE_URL` and encode individual relative-path segments. Feature 003's amendment supersedes selected-only fetching: start loading every catalog `.glb` at viewer startup, retain successful loads for that viewer's lifetime, and independently identify failures on selection. Verify binary framing and parse embedded resources with `GLTFLoader.parseAsync`. The loader's pre-dependency packaging check rejects external buffer/image URIs, and the parse manager blocks network resource URLs. No buffer/texture path rewriting or separate asset requests are needed.
 
 Vite copies the folder hierarchy unchanged into `dist/`. The existing GitHub Actions workflow runs `npm ci`, type-checks, builds, and deploys `dist/`; the GitHub user-site base remains `/`. No server directory listing, runtime scanning, per-model registration, copy plugin, tracked generated manifest, or deployment workflow rewrite.
 
 ## Owner publishing flow
 
 1. Export a self-contained `.glb` and place the single file beneath the existing `glb/` root; no folder rename, `.bin`, image copy, metadata, or project registration is required.
-2. Restart `npm run dev` after changing catalog membership, or run a new production build. No hot-discovery guarantee is introduced.
+   Optional: add a neighboring `<stem>.description.txt` containing custom plain-text copy. This does not affect GLB self-contained buffer/texture rules; all files here are public.
+2. Restart `npm run dev` after changing catalog membership or description contents, or run a new production build. Both are startup/build snapshots; no hot-discovery guarantee is introduced.
 3. Preview and inspect the real model, textures, full rotations, and controls.
 4. Commit the binary models and application changes as appropriate; push to the existing `main` deployment workflow. Only the rebuilt catalog is published.
-5. To remove a model, remove its `.glb` from the folder and rebuild/redeploy. There are no shared sidecars to reconcile.
+5. To remove a model, remove its `.glb` from the folder and rebuild/redeploy. Its description file can be removed too; an orphan never registers a model.
 
 There is no HTTP API or external registration schema. This filesystem-and-static-URL boundary is the integration contract.
