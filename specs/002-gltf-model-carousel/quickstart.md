@@ -33,7 +33,7 @@ Open the URL printed by Vite. `build` and type-check are separate. Inspect actua
 
 ## Owner workflow
 
-Place self-contained `.glb` files anywhere beneath the existing `glb/` root. Rebuild/redeploy to add/remove entries; no folder rename, project registration, or component edits are required. Optional adjacent `<stem>.description.txt` files supply custom plain-text descriptions; restart/rebuild after adding/editing/removing copy. Missing/blank/symlinked sidecars omit captions; orphan files never add entries. Filenames supply titles, with parent context for duplicate names. See [model assets](contracts/model-assets.md) for source-to-public-URL mapping; there is no `/glb/` prefix in published URLs. Discovery uses only this root: if it is absent/empty, show the empty state rather than falling back to the former folder.
+Place self-contained `.glb` files anywhere beneath the existing `glb/` root. Restart development/rebuild production to add/remove entries; no folder rename, project registration, or component edits are required. Optional adjacent `<stem>.config.json` files supply `zRotation` (degrees), `name`, and `description`; config changes automatically restart Vite and refresh the page in development, while production requires rebuilding. Missing/symlinked configs use defaults; invalid configs fail startup/build, and orphan files never add entries. See [model assets](contracts/model-assets.md) and the [README](../../README.md#publish-models) for the current configuration contract. Earlier description-text verification below is historical and superseded by JSON configs. There is no `/glb/` prefix in published URLs. If the model root is absent/empty, show the empty state without a former-folder fallback.
 
 ## Acceptance scenarios
 

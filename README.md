@@ -38,14 +38,26 @@ Put self-contained glTF 2.0 binary **`.glb`** files anywhere inside repository-r
 
 Only regular, lowercase `.glb` files are discovered, recursively and in case-sensitive path order; symlinks and other formats are not carousel entries. Filenames become titles, with parent-folder context for duplicate names. Missing/empty folders show “No models available.”
 
-For a custom description, add an optional UTF-8 text file beside the model, replacing `.glb` with `.description.txt`:
+For per-model settings, add an optional UTF-8 JSON file beside the model, replacing `.glb` with `.config.json`:
 
 ```text
 glb/axes/my axe.glb
-glb/axes/my axe.description.txt
+glb/axes/my axe.config.json
 ```
 
-Write the description as plain text, not JSON or HTML. Restart the dev server or rebuild after adding, editing, or removing it. Leading/trailing whitespace is trimmed; missing, blank, or symlinked description files produce no caption. Descriptions are matched by the full relative model path, so duplicate filenames in separate folders stay independent. Orphan description files never register models. The supplied axe's existing copy now lives in `glb/practice_axeTexture.description.txt`; edit that file to replace it. Description files are public assets, like everything under `glb/`.
+```json
+{
+  "zRotation": 0,
+  "name": "My Axe",
+  "description": "Modeled in Maya, textured in Substance 3D Painter."
+}
+```
+
+- `zRotation`: finite angle in **degrees**, default `0`. Rotates the centered model around its Z axis before turntable/manual inspection, without translating it. Positive angles roll counterclockwise from the initial camera view; negative angles roll clockwise. For example, `45` gives a clear diagonal tilt. The configured roll remains in previews, across modes/navigation, and after inspection returns.
+- `name`: display name, also used by the viewer's accessible label. Missing/blank names fall back to the filename, with parent context for duplicate filenames.
+- `description`: plain text, never HTML. Missing/blank descriptions omit the caption.
+
+All fields are optional; names/descriptions are trimmed. Missing or symlinked config files use defaults; orphan configs never register models. Invalid JSON, unknown fields, or incorrect field types fail startup/build with the config path. Configs match the full relative model path, so identical filenames in separate folders remain independent. During development, adding, editing, or removing a discovered model's config automatically restarts Vite and reloads the page with fresh values. Production still requires a rebuild. Adding/removing GLB models still requires a manual restart/rebuild. The former `.description.txt` format is no longer read. Config files are public assets, like everything under `glb/`.
 
 Models are served/copied at the **public root**: `glb/axes/my axe.glb` becomes `/axes/my%20axe.glb`, not `/glb/axes/...`. Vite's deployment base is respected. Keep only intended public assets in this folder. Spaces are supported; avoid literal `#` in names because Vite 8.3.5 development serving returns HTML for those encoded public paths.
 
@@ -63,7 +75,7 @@ Navigation uses directional slide and scale transitions (`scale 0.72 ↔ 1`, out
 - `src/components/ProjectCarousel.tsx`, `ModelViewer.tsx`, `ViewModeControls.tsx`: wrapping navigation, lazy viewer ownership, status, and accessible display controls.
 - `src/lib/model-viewer.ts`: direct Three.js runtime, three-point lighting, full-turn input, embedded-only loading, and resource cleanup.
 - `src/pages/PortfolioPage.tsx`: reference layout, content, and responsive adaptation.
-- `vite.config.ts`, `src/data/projects.ts`: build/start-time model discovery and optional description loading into the readonly collection.
+- `vite.config.ts`, `src/data/projects.ts`: build/start-time model discovery and optional JSON configuration loading into the readonly collection.
 - `src/assets/figma/`: exported artwork and outlined control masks. Readable identity/status text remains native; JetBrains Mono is locally bundled.
 - `ascii-metaballs.js`: existing renderer retained without feature edits. `MetaballBackground` owns its single cleanup-returning effect and reduced-motion behavior.
 

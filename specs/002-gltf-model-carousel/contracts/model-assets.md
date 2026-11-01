@@ -27,12 +27,12 @@ Only owner-supplied real work ships. Temporary validation models must be removed
 
 ## Discovery and identity
 
-- At dev-server start or production build, scan filenames recursively and serialize sorted relative model paths into `__MODEL_PATHS__`. Read optional adjacent UTF-8 `<stem>.description.txt` files into `__MODEL_DESCRIPTIONS__`, keyed by complete relative GLB path.
+- At dev-server start or production build, scan filenames recursively and serialize sorted relative model paths into `__MODEL_PATHS__`. Read optional adjacent UTF-8 `<stem>.config.json` files into `__MODEL_CONFIGS__`, keyed by complete relative GLB path.
 - Sort case-sensitively by code-unit ordering of POSIX relative paths. No OS traversal order, locale-dependent sort, manually curated array, or mandatory metadata file.
 - A path is a stable catalog identity. Renaming/moving a file changes that identity; removing it removes the entry on next build.
-- Each `.glb` yields exactly one entry regardless of how many meshes/scenes it contains. Distinct paths with the same basename remain distinct; append parent-path context to their visible filename titles.
+- Each `.glb` yields exactly one entry regardless of how many meshes/scenes it contains. Distinct paths with the same basename remain distinct; configured names override filename titles, otherwise append parent-path context to duplicate basenames.
 - Keep corrupt, truncated, or non-self-contained binary entries visible with a selected-item error. Do not silently filter the catalog down to only models that happen to load.
-- Each model may have a plain-text description in an adjacent file replacing `.glb` with `.description.txt` (for example, `axes/model.glb` → `axes/model.description.txt`). Trim surrounding whitespace; missing, blank, and symlinked files mean no caption. Directory entries are ignored; non-missing read errors fail configuration rather than silently dropping copy. No HTML interpretation or runtime metadata fetch. Duplicate basenames remain independent by full path. Orphan description files are not entries. Existing axe copy is migrated unchanged to its sidecar, with no source-code fallback.
+- Each model may have an adjacent `<stem>.config.json` object with optional `zRotation` (finite degrees, default 0), `name` (string, default filename title), and `description` (plain-text string, default no caption). Trim strings; blank strings use defaults. Missing/symlinked files and directory entries are ignored; invalid JSON, unknown fields, invalid types, and non-missing read errors fail configuration with the path. No HTML interpretation or runtime metadata fetch. Duplicate basenames remain independent by full path; orphan configs are not entries. Z rotation rolls the centered model before inspection/turntable rotation; positive is counterclockwise from the initial camera view. It persists across previews, modes, navigation, and inspection return without depth translation. The old description text format is no longer supported.
 
 ## URL and build contract
 
@@ -50,10 +50,10 @@ Vite copies the folder hierarchy unchanged into `dist/`. The existing GitHub Act
 ## Owner publishing flow
 
 1. Export a self-contained `.glb` and place the single file beneath the existing `glb/` root; no folder rename, `.bin`, image copy, metadata, or project registration is required.
-   Optional: add a neighboring `<stem>.description.txt` containing custom plain-text copy. This does not affect GLB self-contained buffer/texture rules; all files here are public.
-2. Restart `npm run dev` after changing catalog membership or description contents, or run a new production build. Both are startup/build snapshots; no hot-discovery guarantee is introduced.
+   Optional: add a neighboring `<stem>.config.json` containing the model name, description, and/or Z rotation in degrees. This does not affect GLB self-contained buffer/texture rules; all files here are public.
+2. During development, saving, creating, or removing a discovered model's config automatically restarts Vite and reloads the page with fresh values. Restart `npm run dev` manually after changing GLB membership. Production model/config changes require a new build.
 3. Preview and inspect the real model, textures, full rotations, and controls.
 4. Commit the binary models and application changes as appropriate; push to the existing `main` deployment workflow. Only the rebuilt catalog is published.
-5. To remove a model, remove its `.glb` from the folder and rebuild/redeploy. Its description file can be removed too; an orphan never registers a model.
+5. To remove a model, remove its `.glb` from the folder and rebuild/redeploy. Its config file can be removed too; an orphan never registers a model.
 
 There is no HTTP API or external registration schema. This filesystem-and-static-URL boundary is the integration contract.

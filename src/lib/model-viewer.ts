@@ -353,6 +353,7 @@ function createLoadResources(): LoadResources {
 type LoadContext = {
   requestId: number
   modelId: string
+  zRotation: number
   abort: AbortController
   manager: LoadingManager
   resources: LoadResources
@@ -377,7 +378,7 @@ const contextOwners = new WeakMap<HTMLCanvasElement, WebGLRenderer>()
 
 export function createModelViewer(
   canvas: HTMLCanvasElement,
-  projects: readonly Pick<Project, 'id' | 'modelUrl'>[],
+  projects: readonly Pick<Project, 'id' | 'modelUrl' | 'zRotation'>[],
   callbacks: ViewerCallbacks,
   acceptance?: ViewerAcceptanceHooks,
   options?: ViewerOptions
@@ -663,7 +664,7 @@ export function createModelViewer(
     // so previews never collide with navigation buttons even with a large orbit setting.
     const maxOrbitForWidth = 1.0 + 1.5 * Math.max(0, Math.min(1, (width - 375) / 500))
     const effectiveOrbit = Math.min(rawOrbit, maxOrbitForWidth)
-    const baseSideOffset = 1.1 + 0.5 * Math.max(0, Math.min(1, (width - 335) / 400))
+    const baseSideOffset = 0.9 + 0.7 * Math.max(0, Math.min(1, (width - 335) / 400))
     const sideOffset = baseSideOffset * effectiveOrbit
     const depth = 1.2 * effectiveOrbit
     const rearDepth = 2.4 * effectiveOrbit
@@ -683,7 +684,7 @@ export function createModelViewer(
     const verticalHalfFov = (camera.fov * Math.PI) / 360
     const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect)
     const distance = Math.max(
-      1 + (2.22 * effectiveOrbit) / (Math.tan(horizontalHalfFov) * 0.82),
+      1 + (1.6 * effectiveOrbit) / (Math.tan(horizontalHalfFov) * 0.9),
       1 + (1.0 * effectiveOrbit) / (Math.tan(verticalHalfFov) * 0.9)
     )
     camera.position.set(0, 0, distance)
@@ -1316,6 +1317,8 @@ export function createModelViewer(
       const normalization = new Group()
       const centering = new Group()
       normalization.scale.setScalar(1 / sphere.radius)
+      // Authored roll belongs inside inspection so turntable/return preserve it.
+      normalization.rotation.z = (load.zRotation * Math.PI) / 180
       centering.position.copy(sphere.center).negate()
       centering.add(result.scene)
       normalization.add(centering)
@@ -1364,6 +1367,7 @@ export function createModelViewer(
     const load: LoadContext = {
       requestId: 0,
       modelId: project.id,
+      zRotation: project.zRotation ?? 0,
       abort: new AbortController(),
       manager,
       resources: createLoadResources(),

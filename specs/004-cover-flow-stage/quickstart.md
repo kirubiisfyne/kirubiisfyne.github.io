@@ -37,9 +37,27 @@ The acceptance server runs on port 5489 with one worker and desktop 1280 × 832 
 - Pause during turntable, return and orbital movement via hidden/offscreen/inactive states where the environment can actually produce them; verify frozen progress and no jump on resume. Record inability to simulate a real visibility transition as a limit, not a pass. Reduced motion removes intermediate automatic/return/selection frames but preserves active manual inspection.
 - Verify retained one-renderer lifecycle, no refetch on mode or navigation, error recovery, keyboard focus, empty/single catalog, no external resource fetches, owner assets unchanged, and normal production output. Record actual environment, timings, screenshots and any untested physical touch or screen-reader speech limitations.
 
+The camera uses tighter horizontal framing to make the centered model larger while retaining the rotation-safe vertical fit. Narrow layouts bring the preview slots inward and position navigation controls outward to keep previews clear of the controls. Navigation targets are at least 44px wide.
+
 ## Observed verification (2026-10-30)
 
 - `npm run typecheck`, `npm run build`, and Chromium `npm run test:acceptance` passed with 84 tests across desktop and mobile.
 - Model optimization & eager startup: Resampled embedded GLTF textures from 2048x2048 to 1024x1024, reducing total model asset download by 64% (axe: 7.82MB → 2.85MB; hammer: 9.17MB → 3.30MB) while preserving full visual surface quality. Added `<link rel="preload">` in `index.html` to download models immediately on document arrival.
 - Removed "Loading 3D model…" / "Loading 3D viewer…" text overlays during loading and navigation transitions; models load quickly up front and materialize via retro 8x8 Bayer dithering dissolve. Error/unavailable states remain visible.
 - Production preview showed the owner-supplied axe centered with the hammer on the right, then the hammer centered with the axe on the right after Next. Verified desktop and 375px mobile layouts with no horizontal scroll or control clipping. Captures: [mobile](evidence/production-mobile.png), [desktop](evidence/production-desktop.png).
+
+## Historical model JSON depth-config verification (2026-11-01)
+
+- Replaced description text sidecars with optional `<stem>.config.json` files containing `zOffset`, `name`, and `description`. Existing names/descriptions were preserved and offsets initialized to zero. See [publishing configuration](../../README.md#publish-models).
+- `npm run typecheck` and `npm run build` passed. A disposable config-loader smoke exercised nested same-basename models, trimmed/blank text, signed offsets, missing configs, symlink/orphan exclusion, malformed JSON, unknown fields, and invalid types.
+- Chromium desktop smoke used a temporary `zOffset: 0.6` and custom name for the owner axe: the model appeared larger with the configured title and existing description, survived Next/Previous navigation, and rendered in Clay. The config was restored to zero and its original title; temporary scripts, browser surfaces, and the additional smoke server were removed.
+- The final unchanged-file `npm run test:acceptance` run passed all 84 desktop/mobile tests. An earlier run was invalidated by live file edits: retained traces showed page reloads and Vite reconnects during both failing scenarios; the clean run required no application/test changes.
+- Development config-refresh fix: saving/creating/removing a discovered model's config now restarts Vite automatically so the page receives fresh injected values, rather than reloading the previous snapshot. Chromium smoke verified a live axe edit from `zOffset: 0` to `0.6` produced the larger render without a manual restart, config removal cleared its injected entry, and restoring the file restored its caption and zero offset. User-supplied hammer/sword offsets were left unchanged. Type-check and build passed after this fix; the acceptance result above predates it.
+
+## Corrected Z rotation configuration (2026-11-01)
+
+The owner clarified rotation, not depth translation. The former depth field and behavior above are superseded: configs now use `zRotation` in degrees (default 0), applied as centered authored roll inside inspection/turntable rotation. Positive angles roll counterclockwise from the initial camera view; negative angles roll clockwise. No depth-offset alias remains. Automatic development config refresh is retained.
+
+Chromium desktop smoke changed the axe from 0° to 45° through its JSON, observed the diagonal roll after automatic refresh, exercised keyboard inspection/release and Clay, then navigated Next/Previous and observed the same configured roll. The temporary axe angle was restored to 0°. Existing numeric config values were retained during field migration, including the hammer's 0.5 (now degrees). `npm run typecheck` and `npm run build` passed.
+
+

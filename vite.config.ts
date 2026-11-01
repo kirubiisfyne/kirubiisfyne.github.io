@@ -32,31 +32,76 @@ function discoverModelPaths(root: string): string[] {
   return paths.sort();
 }
 
-function discoverModelDescriptions(root: string, paths: readonly string[]): Record<string, string> {
-  const descriptions: Record<string, string> = {};
+function discoverModelConfigs(root: string, paths: readonly string[]) {
+  const configs: Record<string, { zRotation?: number; name?: string; description?: string }> = {};
   for (const path of paths) {
-    const sidecar = join(root, path.replace(/\.glb$/, '.description.txt'));
+    const sidecar = join(root, path.replace(/\.glb$/, '.config.json'));
+    let text: string;
     try {
       if (!lstatSync(sidecar).isFile()) continue;
-      const description = readFileSync(sidecar, 'utf8').trim();
-      if (description) descriptions[path] = description;
+      text = readFileSync(sidecar, 'utf8');
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw error;
+    }
+    try {
+      const value: unknown = JSON.parse(text);
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Expected a JSON object.');
+      }
+      const config = value as Record<string, unknown>;
+      const parsed: { zRotation?: number; name?: string; description?: string } = {};
+      for (const key of Object.keys(config)) {
+        if (key !== 'zRotation' && key !== 'name' && key !== 'description') {
+          throw new Error(`Unknown field "${key}".`);
+        }
+      }
+      if (config.zRotation !== undefined) {
+        if (typeof config.zRotation !== 'number' || !Number.isFinite(config.zRotation)) {
+          throw new Error('"zRotation" must be a finite number in degrees.');
+        }
+        parsed.zRotation = config.zRotation;
+      }
+      for (const key of ['name', 'description'] as const) {
+        if (config[key] === undefined) continue;
+        if (typeof config[key] !== 'string') throw new Error(`"${key}" must be a string.`);
+        const trimmed = config[key].trim();
+        if (trimmed) parsed[key] = trimmed;
+      }
+      configs[path] = parsed;
+    } catch (error) {
+      throw new Error(`Invalid model config ${sidecar}: ${(error as Error).message}`);
     }
   }
-  return descriptions;
+  return configs;
 }
 
 const modelRoot = resolve(import.meta.dirname, 'glb');
 const modelPaths = discoverModelPaths(modelRoot);
+const modelConfigPaths = new Set(
+  modelPaths.map((path) => resolve(modelRoot, path.replace(/\.glb$/, '.config.json')))
+);
 
 export default defineConfig({
   publicDir: 'glb',
   define: {
     __MODEL_PATHS__: JSON.stringify(modelPaths),
-    __MODEL_DESCRIPTIONS__: JSON.stringify(discoverModelDescriptions(modelRoot, modelPaths)),
+    __MODEL_CONFIGS__: JSON.stringify(discoverModelConfigs(modelRoot, modelPaths)),
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    {
+      name: 'refresh-model-configs',
+      apply: 'serve',
+      async hotUpdate({ file, server }) {
+        if (this.environment.name !== 'client' || !modelConfigPaths.has(resolve(file))) return;
+        // Re-evaluate the injected catalog instead of reloading stale define values.
+        await server.restart();
+        return [];
+      },
+    },
+  ],
   build: {
     chunkSizeWarningLimit: 1000,
   },

@@ -3,4 +3,5 @@ export interface Project {
   readonly title: string
   readonly modelUrl: string
   readonly description?: string
+  readonly zRotation?: number
 }

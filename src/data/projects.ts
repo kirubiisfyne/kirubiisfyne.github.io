@@ -12,11 +12,13 @@ export const projects: readonly Project[] = __MODEL_PATHS__.map((path) => {
   const parent = separator === -1 ? '.' : path.slice(0, separator)
   const title = filenameCounts.get(filename)! > 1 ? `${filename} (${parent})` : filename
   const modelUrl = import.meta.env.BASE_URL + path.split('/').map(encodeURIComponent).join('/')
+  const config = __MODEL_CONFIGS__[path]
 
   return {
     id: path,
-    title,
+    title: config?.name ?? title,
     modelUrl,
-    ...(__MODEL_DESCRIPTIONS__[path] ? { description: __MODEL_DESCRIPTIONS__[path] } : {}),
+    ...(config?.description ? { description: config.description } : {}),
+    zRotation: config?.zRotation ?? 0,
   }
 })

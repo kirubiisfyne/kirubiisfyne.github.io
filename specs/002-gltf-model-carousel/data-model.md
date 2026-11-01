@@ -10,13 +10,13 @@
 - POSIX separators, no leading slash or `glb/` prefix, no absolute local paths. Relative IDs remain stable when only the catalog root is renamed.
 - Exact case is preserved; order is ascending code-unit comparison, not locale sorting.
 - Root missing/empty means an empty array; ignore directory symlinks.
-- GLB discovery reads filenames only, not binary contents. Optional neighboring description text is read separately; malformed or externally referencing `.glb` files remain entries that report unavailable when selected, rather than disappearing silently.
+- GLB discovery reads filenames only, not binary contents. Optional neighboring model JSON config is read separately; malformed or externally referencing `.glb` files remain entries that report unavailable when selected, rather than disappearing silently.
 - `.gltf`, `.bin`, standalone images, directories, and other files are never entries.
 - Snapshot is fixed for a deployed build or dev-server process; restart/rebuild to rescan.
 
 No generated tracked manifest or registration file exists.
 
-`__MODEL_DESCRIPTIONS__: Readonly<Record<string, string | undefined>>` is a second Vite-injected snapshot. Keys are exact relative GLB paths; values are trimmed text from adjacent `<stem>.description.txt` files. Missing/blank/symlinked sidecars produce no value; orphan files do not affect membership. Rebuild/restart to update copy. All sidecars are public through `publicDir`.
+`__MODEL_CONFIGS__` is a second Vite-injected snapshot, keyed by exact relative GLB paths. Each optional adjacent `<stem>.config.json` supplies optional `zRotation` (finite angle in degrees), `name` (string), and `description` (string). Text is trimmed and blank text omitted. Missing/symlinked configs use defaults; invalid JSON, unsupported fields, and invalid types fail startup/build with the config path. Orphan files do not affect membership. In development, config create/update/delete for discovered models automatically restarts Vite and reloads the page with a fresh snapshot; production config changes require rebuilding. All sidecars are public through `publicDir`; the former description text format is no longer read.
 
 ## Project
 
@@ -25,13 +25,14 @@ Keep the existing exported `Project` symbol in `src/types/project.ts`; replace i
 | Field | Type | Rule |
 | --- | --- | --- |
 | `id` | readonly string | Exact relative model path; unique and stable across builds unless the path changes. |
-| `title` | readonly string | Filename including `.glb`; add parent-path context for duplicate basenames. The UI brackets it for the existing title treatment. |
+| `title` | readonly string | Configured `name`, or filename including `.glb` with parent context for duplicate basenames. The UI brackets it for the existing title treatment. |
 | `modelUrl` | readonly string | Vite base plus each encoded path segment; public root mapping, not an extra `glb/` URL prefix. |
-| `description` | readonly optional string | Plain text from that model's optional adjacent `.description.txt` file; no hardcoded axe fallback or borrowed copy. |
+| `description` | readonly optional string | Trimmed plain text from the model's config; no hardcoded fallback or borrowed copy. |
+| `zRotation` | readonly optional number | Authored Z-axis roll in degrees, default 0. Applied after centering, before inspection/turntable rotation, without translation. Positive is counterclockwise in the initial camera view. |
 
 The module-level `projects: readonly Project[]` in `src/data/projects.ts` derives this shape from the injected path list, not a handwritten project array. The existing page import and carousel prop boundary remain. Remove `titleImageSrc`, `imageSrc`, and `imageAlt` rather than retaining deprecated aliases. Accessible model identity comes from the generated title and viewer instructions/status.
 
-No mandatory per-model metadata, title SVG, image fallback, or custom lighting configuration is required. Optional description files never determine catalog membership. No content is persisted remotely or in local storage.
+No mandatory per-model metadata, title SVG, image fallback, or custom lighting configuration is required. Optional config files never determine catalog membership. No content is persisted remotely or in local storage.
 
 ## Carousel selection
 
