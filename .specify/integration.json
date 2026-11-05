@@ -2,14 +2,14 @@
   "version": "0.12.6.dev0",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "omp"
+    "codex"
   ],
   "integration_settings": {
-    "omp": {
+    "codex": {
       "script": "sh",
-      "invoke_separator": "."
+      "invoke_separator": "-"
     }
   },
-  "integration": "omp",
-  "default_integration": "omp"
+  "integration": "codex",
+  "default_integration": "codex"
 }
