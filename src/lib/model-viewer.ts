@@ -417,7 +417,10 @@ export function createModelViewer(
   }
   contextOwners.set(canvas, renderer)
   const scene = new Scene()
-  const camera = new PerspectiveCamera(35, 1, 0.1, 10)
+  const baseCameraFov = 35
+  const camera = new PerspectiveCamera(baseCameraFov, 1, 0.1, 10)
+  const stage = canvas.parentElement
+  const pointerSurface = stage ?? canvas
   const key = new RectAreaLight(0xffffff, 8, 3, 4)
   key.position.set(3, 3, 4)
   key.lookAt(0, 0, 0)
@@ -453,7 +456,7 @@ export function createModelViewer(
   const catalog = new Map<string, LoadContext>()
   type Slot = 'center' | 'left' | 'right'
   const slotTransforms: Record<Slot, { x: number; z: number; scale: number }> = {
-    center: { x: 0, z: 0, scale: 1.8 },
+    center: { x: 0, z: 0, scale: 2.2 },
     left: { x: -1.6, z: -1.2, scale: 0.62 },
     right: { x: 1.6, z: -1.2, scale: 0.62 },
   }
@@ -605,7 +608,7 @@ export function createModelViewer(
     const id = pointerId
     pointerId = null
     if (id !== null) releaseController(id)
-    if (id !== null && canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id)
+    if (id !== null && pointerSurface.hasPointerCapture(id)) pointerSurface.releasePointerCapture(id)
   }
 
   function retire(load: LoadContext): void {
@@ -667,6 +670,18 @@ export function createModelViewer(
   function measure(): boolean {
     if (!measureDirty) return width > 0 && height > 0
     measureDirty = false
+    const stageRect = stage?.getBoundingClientRect()
+    const bodyRect = document.body.getBoundingClientRect()
+    if (!stage || !stageRect || !(stageRect.width > 0 && stageRect.height > 0 && bodyRect.width > 0)) return false
+    const stageCssWidth = parseFloat(getComputedStyle(stage).width)
+    if (!(stageCssWidth > 0)) return false
+    const cssScale = stageRect.width / stageCssWidth
+    const expandedWidth = bodyRect.width / cssScale
+    const expandedHeight = expandedWidth * stageRect.height / stageRect.width
+    canvas.style.width = `${expandedWidth}px`
+    canvas.style.height = `${expandedHeight}px`
+    canvas.style.left = `${(bodyRect.left - stageRect.left) / cssScale}px`
+    canvas.style.top = `${(stageRect.height / cssScale - expandedHeight) / 2}px`
     const rect = canvas.getBoundingClientRect()
     width = rect.width
     height = rect.height
@@ -678,9 +693,9 @@ export function createModelViewer(
     const rawOrbit = Number.isFinite(parsedCss) && parsedCss > 0 ? parsedCss : orbitRadius
     // On narrow screens (mobile), scale the effective orbit with available width
     // so previews never collide with navigation buttons even with a large orbit setting.
-    const maxOrbitForWidth = 1.0 + 1.5 * Math.max(0, Math.min(1, (width - 375) / 500))
+    const maxOrbitForWidth = 1.0 + 1.5 * Math.max(0, Math.min(1, (stageRect.width - 375) / 500))
     const effectiveOrbit = Math.min(rawOrbit, maxOrbitForWidth)
-    const baseSideOffset = 0.9 + 0.7 * Math.max(0, Math.min(1, (width - 335) / 400))
+    const baseSideOffset = 0.9 + 0.7 * Math.max(0, Math.min(1, (stageRect.width - 335) / 400))
     const sideOffset = baseSideOffset * effectiveOrbit
     const depth = 1.2 * effectiveOrbit
     const rearDepth = 2.4 * effectiveOrbit
@@ -697,12 +712,13 @@ export function createModelViewer(
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.setSize(width, height, false)
     camera.aspect = width / height
-    const verticalHalfFov = (camera.fov * Math.PI) / 360
+    const verticalHalfFov = (baseCameraFov * Math.PI) / 360
     const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect)
     const distance = Math.max(
       1 + (1.6 * effectiveOrbit) / (Math.tan(horizontalHalfFov) * 0.9),
       1 + (1.0 * effectiveOrbit) / (Math.tan(verticalHalfFov) * 0.9)
     )
+    camera.fov = (2 * Math.atan(Math.tan(verticalHalfFov) * height / stageRect.height) * 180) / Math.PI
     camera.position.set(0, 0, distance)
     camera.near = Math.max(0.01, distance - 2.2)
     camera.far = distance + rearDepth + 1.2
@@ -1177,7 +1193,7 @@ export function createModelViewer(
     canvas.dataset.pointerFocus = ''
     canvas.focus({ preventScroll: true })
     event.preventDefault()
-    canvas.setPointerCapture(event.pointerId)
+    pointerSurface.setPointerCapture(event.pointerId)
     pointerId = event.pointerId
     acquireController(event.pointerId)
     pointerX = event.clientX
@@ -1263,11 +1279,11 @@ export function createModelViewer(
     motionPreference.removeEventListener('change', visibility)
     document.removeEventListener('visibilitychange', visibility)
     document.removeEventListener('keydown', keyboardModality, true)
-    canvas.removeEventListener('pointerdown', pointerDown)
-    canvas.removeEventListener('pointermove', pointerMove)
-    canvas.removeEventListener('pointerup', pointerEnd)
-    canvas.removeEventListener('pointercancel', pointerEnd)
-    canvas.removeEventListener('lostpointercapture', pointerEnd)
+    pointerSurface.removeEventListener('pointerdown', pointerDown)
+    pointerSurface.removeEventListener('pointermove', pointerMove)
+    pointerSurface.removeEventListener('pointerup', pointerEnd)
+    pointerSurface.removeEventListener('pointercancel', pointerEnd)
+    pointerSurface.removeEventListener('lostpointercapture', pointerEnd)
     canvas.removeEventListener('keydown', keyDown)
     canvas.removeEventListener('focus', canvasFocus)
     canvas.removeEventListener('blur', canvasBlur)
@@ -1379,6 +1395,8 @@ export function createModelViewer(
 
   const observer = new ResizeObserver(resize)
   observer.observe(canvas)
+  if (stage) observer.observe(stage)
+  observer.observe(document.body)
   const intersection = new IntersectionObserver((entries) => {
     intersecting = entries[0]?.isIntersecting ?? false
     animationTime(performance.now())
@@ -1388,11 +1406,11 @@ export function createModelViewer(
   intersection.observe(canvas)
   motionPreference.addEventListener('change', visibility)
   document.addEventListener('visibilitychange', visibility)
-  canvas.addEventListener('pointerdown', pointerDown)
-  canvas.addEventListener('pointermove', pointerMove)
-  canvas.addEventListener('pointerup', pointerEnd)
-  canvas.addEventListener('pointercancel', pointerEnd)
-  canvas.addEventListener('lostpointercapture', pointerEnd)
+  pointerSurface.addEventListener('pointerdown', pointerDown)
+  pointerSurface.addEventListener('pointermove', pointerMove)
+  pointerSurface.addEventListener('pointerup', pointerEnd)
+  pointerSurface.addEventListener('pointercancel', pointerEnd)
+  pointerSurface.addEventListener('lostpointercapture', pointerEnd)
   canvas.addEventListener('keydown', keyDown)
   canvas.addEventListener('focus', canvasFocus)
   canvas.addEventListener('blur', canvasBlur)

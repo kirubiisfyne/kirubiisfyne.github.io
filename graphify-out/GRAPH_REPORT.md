@@ -1,7 +1,7 @@
 # Graph Report - portfolio  (2026-11-06)
 
 ## Corpus Check
-- 47 files · ~140,392 words
+- 47 files · ~140,769 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: .glb 12, (none) 2, .css 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d0ca6c25`
+- Built from commit: `b7b741ec`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -62,7 +62,7 @@
 7. `ViewerAcceptanceHooks` - 10 edges
 8. `ProjectCarousel()` - 10 edges
 9. `mountAsciiMetaballs()` - 10 edges
-10. `createLoadResources()` - 9 edges
+10. `fail()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `PresentationDraw` --references--> `ViewerStatus`  [EXTRACTED]
@@ -73,8 +73,8 @@
   tests/acceptance/harness.tsx → src/components/ProjectCarousel.tsx
 - `MetaballBackground()` --calls--> `mountAsciiMetaballs()`  [EXTRACTED]
   src/components/MetaballBackground.tsx → ascii-metaballs.js
-- `ViewModeControlsProps` --references--> `DisplayMode`  [EXTRACTED]
-  src/components/ViewModeControls.tsx → src/lib/model-viewer.ts
+- `ProjectCarouselProps` --references--> `Project`  [EXTRACTED]
+  src/components/ProjectCarousel.tsx → src/types/project.ts
 
 ## Import Cycles
 - None detected.

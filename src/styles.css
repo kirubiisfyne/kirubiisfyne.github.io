@@ -27,7 +27,9 @@
 
   /* Scale content without changing the viewport-sized canvas outside #root. */
   #root {
-    zoom: 1.25;
+    position: relative;
+    z-index: 0;
+    zoom: 1;
   }
 
   button {
@@ -97,11 +99,24 @@
   height: var(--viewer-height);
 }
 
+.viewer-stage {
+  touch-action: none;
+}
+
 .model-canvas {
+  position: absolute;
+  z-index: -1;
   display: block;
   width: 100%;
   height: 100%;
   touch-action: none;
+}
+
+.project-title,
+.project-description,
+.view-mode-controls {
+  position: relative;
+  z-index: 1;
 }
 
 .model-canvas:focus-visible:not([data-pointer-focus]) {

@@ -35,6 +35,45 @@ async function expectRest(page: Page, count: number, index: number) {
   expect(new Set(frame.participants.map(p => p.modelId)).size).toBe(frame.participants.length);
 }
 
+test('canvas fills body while preserving stage aspect and center', async ({ page }) => {
+  await page.goto('/tests/acceptance/index.html?catalog=four');
+  await expect(page.locator('.project-title')).toHaveAttribute('data-revealed', '');
+  const geometry = async () => page.evaluate(() => {
+    const canvas = document.querySelector('.model-canvas')!.getBoundingClientRect();
+    const stage = document.querySelector('.viewer-stage')!.getBoundingClientRect();
+    const body = document.body.getBoundingClientRect();
+    return {
+      canvasLeft: canvas.left, canvasWidth: canvas.width, canvasHeight: canvas.height,
+      canvasCenterY: canvas.top + canvas.height / 2,
+      stageWidth: stage.width, stageHeight: stage.height, stageCenterY: stage.top + stage.height / 2,
+      bodyLeft: body.left, bodyWidth: body.width,
+    };
+  });
+  for (const viewport of [null, { width: 700, height: 700 }]) {
+    if (viewport) await page.setViewportSize(viewport);
+    await expect.poll(async () => {
+      const g = await geometry();
+      return Math.abs(g.canvasWidth - g.bodyWidth);
+    }).toBeLessThan(1);
+    const g = await geometry();
+    expect(Math.abs(g.canvasLeft - g.bodyLeft)).toBeLessThan(1);
+    expect(Math.abs(g.canvasCenterY - g.stageCenterY)).toBeLessThan(1);
+    expect(g.canvasWidth / g.canvasHeight).toBeCloseTo(g.stageWidth / g.stageHeight, 2);
+  }
+  const overlayOnTop = await page.evaluate(() => {
+    const canvas = document.querySelector('.model-canvas')!;
+    const bounds = canvas.getBoundingClientRect();
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;left:${bounds.left + bounds.width / 2 - 10}px;top:${bounds.top + bounds.height / 2 - 10}px;width:20px;height:20px;`;
+    document.getElementById('root')!.prepend(overlay);
+    const elements = document.elementsFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+    const onTop = elements.indexOf(overlay) < elements.indexOf(canvas) && elements.includes(overlay) && elements.includes(canvas);
+    overlay.remove();
+    return onTop;
+  });
+  expect(overlayOnTop).toBe(true);
+});
+
 test.describe('resting cover flow', () => {
   for (const count of [3, 4]) {
     for (let start = 0; start < count; start++) {
@@ -148,6 +187,16 @@ test.describe('resting cover flow', () => {
       await expect(button).toHaveAttribute('aria-pressed', 'true');
       await expectRest(page, 4, 0);
     }
+    const stage = await page.locator('.viewer-stage').boundingBox();
+    expect(stage).not.toBeNull();
+    const beforeDrag = await lastStage(page);
+    await page.mouse.move(stage!.x + stage!.width / 2, stage!.y + stage!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(stage!.x + stage!.width / 2 + 50, stage!.y + stage!.height / 2 + 20, { steps: 5 });
+    await expect.poll(async () => (await lastStage(page)).participants.find(p => p.modelId === 'fixture-a')!.pose)
+      .not.toEqual(beforeDrag.participants.find(p => p.modelId === 'fixture-a')!.pose);
+    await page.mouse.up();
+
     const canvas = page.locator('canvas');
     await canvas.focus();
     await page.keyboard.down('ArrowRight');
