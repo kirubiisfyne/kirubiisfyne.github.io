@@ -23,7 +23,7 @@ for (const direction of ['Next', 'Previous'] as const) {
     for (const draw of draws) {
       expect(new Set(draw.participants.map(p => p.modelId)).size).toBe(draw.participants.length);
       for (const participant of draw.participants) {
-        expect(participant.position[1]).toBeCloseTo(participant.position[0] * Math.tan(Math.PI / 6), 6);
+        expect(participant.position[1]).toBeCloseTo(participant.position[0] * Math.tan(Math.PI / 8), 6);
       }
     }
     expect(moving.some(d => d.participants.length === 4)).toBe(true);
