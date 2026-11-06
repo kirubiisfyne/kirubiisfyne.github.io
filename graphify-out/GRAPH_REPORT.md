@@ -1,17 +1,17 @@
 # Graph Report - portfolio  (2026-11-06)
 
 ## Corpus Check
-- 48 files · ~140,363 words
+- 47 files · ~140,392 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: .glb 12, (none) 2, .css 1)
 
 ## Summary
-- 533 nodes · 793 edges · 36 communities (33 shown, 3 thin omitted)
+- 532 nodes · 792 edges · 36 communities (33 shown, 3 thin omitted)
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1959d681`
+- Built from commit: `d0ca6c25`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -53,8 +53,8 @@
 - @vitejs/plugin-react
 
 ## God Nodes (most connected - your core abstractions)
-1. `createModelViewer()` - 50 edges
-2. `draw()` - 20 edges
+1. `createModelViewer()` - 49 edges
+2. `draw()` - 21 edges
 3. `hooks` - 19 edges
 4. `releaseRuntime()` - 17 edges
 5. `compilerOptions` - 15 edges
@@ -62,7 +62,7 @@
 7. `ViewerAcceptanceHooks` - 10 edges
 8. `ProjectCarousel()` - 10 edges
 9. `mountAsciiMetaballs()` - 10 edges
-10. `@playwright/test` - 10 edges
+10. `createLoadResources()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `PresentationDraw` --references--> `ViewerStatus`  [EXTRACTED]
@@ -73,8 +73,8 @@
   tests/acceptance/harness.tsx → src/components/ProjectCarousel.tsx
 - `MetaballBackground()` --calls--> `mountAsciiMetaballs()`  [EXTRACTED]
   src/components/MetaballBackground.tsx → ascii-metaballs.js
-- `ProjectCarouselProps` --references--> `Project`  [EXTRACTED]
-  src/components/ProjectCarousel.tsx → src/types/project.ts
+- `ViewModeControlsProps` --references--> `DisplayMode`  [EXTRACTED]
+  src/components/ViewModeControls.tsx → src/lib/model-viewer.ts
 
 ## Import Cycles
 - None detected.
@@ -86,7 +86,7 @@ Cohesion: 0.05
 Nodes (36): CarouselMetadata(), CarouselMetadataProps, MetadataAcceptanceHooks, MetadataPart, ModelViewer(), ModelViewerProps, AcceptanceControls, MetadataProof (+28 more)
 
 ### Community 1 - "createModelViewer"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (50): attachDither(), createModelViewer(), acquireController(), alive(), animationTime(), applyMode(), applyRotation(), assignments() (+42 more)
 
 ### Community 2 - "steps"
@@ -220,16 +220,16 @@ Nodes (5): command, description, optional, prompt, before_taskstoissues
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `react` connect `PortfolioPage.tsx` to `ProjectCarousel.tsx`, `package.json`, `harness.tsx`?**
-  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+  _High betweenness centrality (0.082) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `createModelViewer()` (e.g. with `canvasBlur()` and `canvasFocus()`) actually correct?**
   _`createModelViewer()` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **Should `ProjectCarousel.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05268065268065268 - nodes in this community are weakly interconnected._
 - **Why does `createModelViewer()` connect `createModelViewer` to `ProjectCarousel.tsx`, `createLoadResources`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
+  _High betweenness centrality (0.074) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `releaseRuntime()` (e.g. with `canvasBlur()` and `canvasFocus()`) actually correct?**
   _`releaseRuntime()` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **Should `createModelViewer` be split into smaller, more focused modules?**
-  _Cohesion score 0.12571428571428572 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12489795918367347 - nodes in this community are weakly interconnected._
 - **Why does `@playwright/test` connect `@playwright/test` to `package.json`?**
-  _High betweenness centrality (0.057) - this node is a cross-community bridge._
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._

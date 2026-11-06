@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 type Participant = { modelId: string; position: [number, number, number]; scale: [number, number, number]; pose: [number, number] };
-type Draw = { phase: string; timestamp: number; progress: number | null; participants: Participant[] };
+type Draw = { phase: string; timestamp: number; progress: number | null; cameraDistance: number; participants: Participant[] };
 
 for (const direction of ['Next', 'Previous'] as const) {
   test(`${direction} presents distinct orbital participants and preserves mode`, async ({ page }) => {
@@ -10,7 +10,8 @@ for (const direction of ['Next', 'Previous'] as const) {
     await page.getByRole('button', { name: 'Clay', exact: true }).click();
     const incoming = direction === 'Next' ? 'fixture-b' : 'fixture-d';
     await expect.poll(async () => page.evaluate(() => (window.__ACCEPTANCE__!.presentationDraws as unknown as Draw[]).at(-1)?.participants.length)).toBe(3);
-    const initialPose = await page.evaluate(id => (window.__ACCEPTANCE__!.presentationDraws as unknown as Draw[]).at(-1)!.participants.find(p => p.modelId === id)!.pose, incoming);
+    const initial = await page.evaluate(() => (window.__ACCEPTANCE__!.presentationDraws as unknown as Draw[]).at(-1)!);
+    const initialPose = initial.participants.find(p => p.modelId === incoming)!.pose;
     await page.evaluate(() => window.__ACCEPTANCE__!.reset());
     await page.getByRole('button', { name: `${direction} project` }).click();
     await expect(page.locator('.project-title')).toContainText(direction === 'Next' ? 'Beta' : 'Delta');
@@ -19,7 +20,12 @@ for (const direction of ['Next', 'Previous'] as const) {
     const draws = await page.evaluate(() => window.__ACCEPTANCE__!.presentationDraws as unknown as Draw[]);
     const moving = draws.filter(d => d.phase === 'moving' && d.participants?.some(p => p.modelId === incoming));
     expect(moving.length).toBeGreaterThan(1);
-    for (const draw of draws) expect(new Set(draw.participants.map(p => p.modelId)).size).toBe(draw.participants.length);
+    for (const draw of draws) {
+      expect(new Set(draw.participants.map(p => p.modelId)).size).toBe(draw.participants.length);
+      for (const participant of draw.participants) {
+        expect(participant.position[1]).toBeCloseTo(participant.position[0] * Math.tan(Math.PI / 6), 6);
+      }
+    }
     expect(moving.some(d => d.participants.length === 4)).toBe(true);
     const first = moving[0];
     const last = moving[moving.length - 1];
@@ -34,6 +40,14 @@ for (const direction of ['Next', 'Previous'] as const) {
     const final = draws.slice(draws.lastIndexOf(last) + 1).find(d => d.phase === 'ready' && d.participants.some(p => p.modelId === incoming));
     expect(final).toBeDefined();
     expect(find(final!, incoming).pose).toEqual(initialPose);
+    expect(final!.cameraDistance).toBeCloseTo(initial.cameraDistance, 6);
+    expect(moving.every(d => Math.abs(d.cameraDistance - initial.cameraDistance) < 1e-6)).toBe(true);
+    const outgoingPositions = moving.map(d => sign * find(d, 'fixture-a').position[0]);
+    expect(Math.max(...outgoingPositions)).toBeGreaterThan(outgoingPositions[0] + 0.05);
+    expect(outgoingPositions.at(-1)!).toBeLessThan(outgoingPositions[0]);
+    const incomingPositions = moving.map(d => sign * find(d, incoming).position[0]);
+    expect(Math.min(...incomingPositions)).toBeLessThan(-0.01);
+    expect(Math.abs(incomingPositions.at(-1)!)).toBeLessThan(Math.abs(Math.min(...incomingPositions)));
   });
 }
 

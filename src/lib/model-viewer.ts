@@ -83,6 +83,7 @@ export interface ViewerAcceptanceHooks {
     position: [number, number, number]
     scale: [number, number, number]
     progress: number | null
+    cameraDistance: number
     participants: {
       modelId: string
       position: [number, number, number]
@@ -95,9 +96,22 @@ export interface ViewerAcceptanceHooks {
 
 const FULL_TURN = Math.PI * 2
 const KEY_TURN = Math.PI / 36
+const ORBIT_TILT = Math.PI / 8
+// Durations are proportionally shortened when the settlement deadline is near.
+const ANTICIPATION_AMOUNT = 0.15
+const ANTICIPATION_DURATION_MS = 250
+const TRANSITION_DURATION_MS = 700
+const OVERSHOOT_AMOUNT = 0.08
+const OVERSHOOT_SETTLE_DURATION_MS = 250
+const SETTLEMENT_DEADLINE_MS = 1500
 
-function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
+function setOrbitPosition(object: Object3D, x: number, z: number): void {
+  object.position.set(x * Math.cos(ORBIT_TILT), x * Math.sin(ORBIT_TILT), z)
+}
+
+// Zero velocity and acceleration at each phase boundary soften direction changes.
+function easeInOutSmooth(t: number): number {
+  return t * t * t * (t * (t * 6 - 15) + 10)
 }
 
 const DITHER_DISCARD_CHUNK = `
@@ -439,7 +453,7 @@ export function createModelViewer(
   const catalog = new Map<string, LoadContext>()
   type Slot = 'center' | 'left' | 'right'
   const slotTransforms: Record<Slot, { x: number; z: number; scale: number }> = {
-    center: { x: 0, z: 0, scale: 1 },
+    center: { x: 0, z: 0, scale: 1.8 },
     left: { x: -1.6, z: -1.2, scale: 0.62 },
     right: { x: 1.6, z: -1.2, scale: 0.62 },
   }
@@ -462,7 +476,7 @@ export function createModelViewer(
   function setSlot(load: LoadContext, slot: Slot): void {
     if (!load.presentation) return
     const transform = slotTransforms[slot]
-    load.presentation.position.set(transform.x, 0, transform.z)
+    setOrbitPosition(load.presentation, transform.x, transform.z)
     load.presentation.scale.setScalar(transform.scale)
   }
   let metadataReady = false
@@ -471,6 +485,8 @@ export function createModelViewer(
   let moving = false
   let moveStartedAtAnimationMs = 0
   let moveDurationMs = 0
+  let anticipationDurationMs = 0
+  let transitionDurationMs = 0
   let moveDirection = 0
   type TransitionParticipant = {
     load: LoadContext
@@ -688,7 +704,7 @@ export function createModelViewer(
       1 + (1.0 * effectiveOrbit) / (Math.tan(verticalHalfFov) * 0.9)
     )
     camera.position.set(0, 0, distance)
-    camera.near = Math.max(0.01, distance - 1.1)
+    camera.near = Math.max(0.01, distance - 2.2)
     camera.far = distance + rearDepth + 1.2
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
@@ -835,6 +851,7 @@ export function createModelViewer(
         scale: [p.scale.x, p.scale.y, p.scale.z],
         phase,
         progress,
+        cameraDistance: camera.position.z,
         participants: Array.from(catalog.values())
           .filter((load) => load.presentation?.visible)
           .map((load) => {
@@ -877,7 +894,7 @@ export function createModelViewer(
   }
 
   function moveStage(progress: number): void {
-    const e = easeInOutCubic(progress)
+    const e = progress
     for (const load of catalog.values()) if (load.presentation) load.presentation.visible = false
     const sideX = slotTransforms.right.x
     const depthZ = Math.abs(slotTransforms.right.z)
@@ -890,6 +907,7 @@ export function createModelViewer(
 
       let x = from.x + (to.x - from.x) * e
       let z = from.z + (to.z - from.z) * e
+      const boundedProgress = Math.max(0, Math.min(1, e))
 
       if (
         projects.length === 2 &&
@@ -930,9 +948,9 @@ export function createModelViewer(
       } else if (!part.startSlot || !part.endSlot) {
         z -= (rearZ - depthZ) * 0.4 * Math.sin(Math.PI * e)
         if (!part.startSlot && part.endSlot) {
-          load.ditherUniform.value = motionPreference.matches ? 1.0 : e
+          load.ditherUniform.value = motionPreference.matches ? 1.0 : boundedProgress
         } else if (part.startSlot && !part.endSlot) {
-          load.ditherUniform.value = motionPreference.matches ? 0.0 : 1.0 - e
+          load.ditherUniform.value = motionPreference.matches ? 0.0 : 1.0 - boundedProgress
         }
       } else if (part.startSlot === 'center' || part.endSlot === 'center') {
         const arcDir = to.x > from.x ? 1 : -1
@@ -947,12 +965,12 @@ export function createModelViewer(
       }
 
       presentation.visible = true
-      presentation.position.set(x, 0, z)
-      presentation.scale.setScalar(from.scale + (to.scale - from.scale) * e)
+      setOrbitPosition(presentation, x, z)
+      presentation.scale.setScalar(from.scale + (to.scale - from.scale) * boundedProgress)
 
       if (load === displayed) {
-        load.yaw = part.yaw + shortestDelta(part.yaw, 0) * e
-        load.pitch = part.pitch + shortestDelta(part.pitch, 0) * e
+        load.yaw = part.yaw + shortestDelta(part.yaw, 0) * boundedProgress
+        load.pitch = part.pitch + shortestDelta(part.pitch, 0) * boundedProgress
       } else {
         load.yaw = 0
         load.pitch = 0
@@ -1010,8 +1028,18 @@ export function createModelViewer(
             moveDirection = selection.request.direction === 'next' ? 1 : -1
             // Leave time for the final validated draw, metadata commit and
             // compositor presentation, rather than spending the budget on motion.
-            const remainingMs = selection.deadlineAtMs !== null ? selection.deadlineAtMs - performance.now() - 175 : 240
-            moveDurationMs = Math.max(0, Math.min(240, remainingMs))
+            const requestedDuration = Math.max(0, ANTICIPATION_DURATION_MS) + Math.max(0, TRANSITION_DURATION_MS)
+              + Math.max(0, OVERSHOOT_SETTLE_DURATION_MS)
+            const remainingMs = selection.deadlineAtMs !== null
+              ? selection.deadlineAtMs - performance.now() - 175
+              : requestedDuration
+            moveDurationMs = Math.max(0, Math.min(requestedDuration, remainingMs))
+            anticipationDurationMs = requestedDuration > 0
+              ? moveDurationMs * Math.max(0, ANTICIPATION_DURATION_MS) / requestedDuration
+              : 0
+            transitionDurationMs = requestedDuration > 0
+              ? moveDurationMs * Math.max(0, TRANSITION_DURATION_MS) / requestedDuration
+              : 0
             moveStartedAtAnimationMs = animationNow
             candidate.yaw = 0
             candidate.pitch = 0
@@ -1021,10 +1049,23 @@ export function createModelViewer(
             snapshotMovement(displayed!, candidate)
             emit('moving')
           }
-          const progress =
-            moveDurationMs <= 0 ? 1 : Math.min(1, (animationNow - moveStartedAtAnimationMs) / moveDurationMs)
+          const elapsed = Math.max(0, animationNow - moveStartedAtAnimationMs)
+          const progress = moveDurationMs <= 0 ? 1 : Math.min(1, elapsed / moveDurationMs)
           if (progress < 1) {
-            moveStage(progress)
+            const anticipating = anticipationDurationMs > 0 && elapsed < anticipationDurationMs
+            const transitionEnd = anticipationDurationMs + transitionDurationMs
+            const settling = elapsed >= transitionEnd
+            const settleDuration = moveDurationMs - transitionEnd
+            const amount = Math.max(0, Math.min(1, ANTICIPATION_AMOUNT))
+            const overshoot = Math.max(0, Math.min(1, OVERSHOOT_AMOUNT))
+            const orbitProgress = anticipating
+              ? -amount * easeInOutSmooth(elapsed / anticipationDurationMs)
+              : settling
+                ? 1 + overshoot * (1 - easeInOutSmooth(settleDuration > 0 ? (elapsed - transitionEnd) / settleDuration : 1))
+                : -amount + (1 + amount + overshoot) * easeInOutSmooth(
+                  (elapsed - anticipationDurationMs) / transitionDurationMs,
+                )
+            moveStage(orbitProgress)
             drawStage(candidate, progress)
             invalidate()
             return
@@ -1418,7 +1459,7 @@ export function createModelViewer(
       }
       moving = false
       candidate = null
-      selection = { request, deadlineAtMs: request.activatedAtMs === null ? null : request.activatedAtMs + 500 }
+      selection = { request, deadlineAtMs: request.activatedAtMs === null ? null : request.activatedAtMs + SETTLEMENT_DEADLINE_MS }
       ticket = { requestId: request.requestId, modelId: request.model.id }
       metadataReady = false
       if (terminalError) {

@@ -71,6 +71,7 @@ export interface PresentationDraw {
   readonly scale: [number, number, number];
   readonly phase: ViewerStatus['state'];
   readonly progress: number | null;
+  readonly cameraDistance: number;
   readonly participants: { modelId: string; position: [number, number, number]; scale: [number, number, number]; pose: [number, number] }[];
 }
 
