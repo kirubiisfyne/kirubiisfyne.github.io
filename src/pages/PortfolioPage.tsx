@@ -3,13 +3,12 @@ import greeting from '../assets/figma/greeting.svg'
 import greetingStrip from '../assets/figma/greeting-strip.svg'
 import projectsArtwork from '../assets/figma/projects-ascii.svg'
 import wordmark from '../assets/figma/wordmark.svg'
+import { GameShowcase } from '../components/GameShowcase'
 import { H1 } from '../components/H1'
 import { H2 } from '../components/H2'
 import { ProjectCarousel } from '../components/ProjectCarousel'
 import { projects } from '../data/projects'
-
-const introduction =
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
+import { introduction } from '../data/site-copy'
 
 export function PortfolioPage() {
   return (
@@ -27,6 +26,7 @@ export function PortfolioPage() {
         <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={introduction} />
         <ProjectCarousel projects={projects} />
       </section>
+      <GameShowcase />
     </main>
   )
 }

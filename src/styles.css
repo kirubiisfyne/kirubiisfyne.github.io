@@ -42,6 +42,101 @@
   }
 }
 
+.game-showcase {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: center;
+  min-width: 0;
+}
+
+.game-dev-artwork {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 267px);
+  height: 32px;
+  isolation: isolate;
+  background: #ebebeb;
+}
+
+.game-dev-artwork pre {
+  position: absolute;
+  margin: 0;
+  color: white;
+  font: 12px/12px var(--font-mono);
+  white-space: pre;
+  mix-blend-mode: difference;
+}
+
+.game-carousel {
+  width: 100%;
+  max-width: 1152px;
+  margin-inline: auto;
+  color: white;
+}
+
+.game-title {
+  min-height: 18px;
+  margin: 0 0 2px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.15em;
+}
+
+.game-title::before { content: '[ '; }
+.game-title::after { content: ' ]'; }
+
+.game-carousel-stage { position: relative; }
+
+.game-carousel .game-navigation-button {
+  top: 50%;
+  width: 48px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.game-carousel .navigation-previous { left: min(11.111%, 128px); }
+.game-carousel .navigation-next { right: min(11.111%, 128px); }
+.game-carousel .navigation-artwork { width: 42px; height: 64px; }
+
+@media (max-width: 600px) {
+  .game-carousel .navigation-previous { left: 0; }
+  .game-carousel .navigation-next { right: 0; }
+}
+
+.tv-stage {
+  position: relative;
+  height: clamp(240px, 60vw, 604px);
+}
+
+.tv-canvas {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tv-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.game-details { margin: 32px auto 0; }
+.game-description { margin: 0; font-size: 12px; line-height: 16px; overflow-wrap: anywhere; }
+.game-play { width: 158px; margin: 12px auto 0; padding: 0; color: inherit; text-decoration: none; cursor: pointer; }
+.game-play:focus-visible { outline: 2px solid white; outline-offset: 6px; }
+.game-announcement, .game-link-hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
 .project-carousel {
   width: 100%;
   max-width: 1152px;
@@ -238,7 +333,8 @@
   to { transform: translateX(var(--arrow-travel)); }
 }
 
-.view-mode-button:enabled:is(:hover, :focus-visible)::before {
+.view-mode-button:enabled:is(:hover, :focus-visible)::before,
+.game-play:is(:hover, :focus-visible)::before {
   opacity: 1;
 }
 
