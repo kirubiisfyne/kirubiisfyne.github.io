@@ -26,6 +26,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
   const textures = new Map<string, THREE.Texture>()
   let screen: THREE.MeshStandardMaterial | null = null
   let originalMap: THREE.Texture | null = null
+  let originalBaseMap: THREE.Texture | null = null
   let desiredUrl: string | null = null
   let desiredRotation: 0 | 180 = 0
   const uvCenter = new THREE.Vector2(0.5, 0.5)
@@ -40,6 +41,24 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
   let motionFrame: number | null = null
   let lastFrame = 0
   const draw = () => { if (!disposed && !contextUnavailable) renderer.render(scene, camera) }
+  const noiseFrame = { value: 0 }
+  const noiseImage = { value: 0 }
+  let noiseTimer: number | null = null
+  let visible = false
+  const updateNoise = () => {
+    if (noiseTimer !== null) window.clearInterval(noiseTimer)
+    noiseTimer = null
+    if (!screen || disposed || contextUnavailable || !visible || document.hidden || reducedMotion.matches) return
+    noiseTimer = window.setInterval(() => {
+      noiseFrame.value += 1
+      draw()
+    }, 100)
+  }
+  const intersection = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting
+    updateNoise()
+  })
+  intersection.observe(canvas)
   const cancelMotion = () => {
     if (motionFrame !== null) cancelAnimationFrame(motionFrame)
     motionFrame = null
@@ -75,6 +94,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
   }
   const onPointerOut = (event: PointerEvent) => { if (!event.relatedTarget) resetTilt() }
   const onMotionPreference = () => {
+    updateNoise()
     if (reducedMotion.matches) {
       cancelMotion()
       targetTilt.set(0, 0)
@@ -82,6 +102,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
     }
   }
   const onVisibility = () => {
+    updateNoise()
     if (document.hidden) {
       cancelMotion()
       targetTilt.set(0, 0)
@@ -131,7 +152,8 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
     if (disposed || contextUnavailable || !screen || !originalMap) return
     const material = screen
     const original = originalMap
-    // Clear the screen while changing channels.
+    // Show full static while changing channels or when no image is available.
+    noiseImage.value = 0
     material.emissiveMap = null
     material.emissive.setRGB(0, 0, 0)
     material.needsUpdate = true
@@ -158,6 +180,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
       else texture.matrix.copy(original.matrix)
       texture.needsUpdate = true
       textures.set(url, texture)
+      noiseImage.value = 1
       material.emissive.setRGB(1, 1, 1)
       material.emissiveMap = texture
       material.needsUpdate = true
@@ -172,6 +195,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
     event.preventDefault()
     if (disposed) return
     contextUnavailable = true
+    updateNoise()
     cancelMotion()
     request++
     onStatus('unavailable')
@@ -187,6 +211,34 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
       // The exported opaque TV body is slightly in front of the image mesh.
       // Draw only the authored screen image over it, without changing the source mesh.
       screen = material.clone()
+      originalBaseMap = screen.map
+      screen.map = null
+      // The game image is emissive; a white diffuse surface washes it out under the lights.
+      screen.color.setRGB(0, 0, 0)
+      // Generate colored static independently of the removed authored noise texture.
+      screen.onBeforeCompile = (shader) => {
+        shader.uniforms.noiseFrame = noiseFrame
+        shader.uniforms.noiseImage = noiseImage
+        shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>
+          varying vec2 vStaticUv;
+        `).replace('#include <uv_vertex>', `#include <uv_vertex>
+          vStaticUv = uv;
+        `)
+        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+          uniform float noiseFrame;
+          uniform float noiseImage;
+          varying vec2 vStaticUv;
+          float staticHash(vec2 cell) {
+            return fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+          }
+        `).replace('#include <opaque_fragment>', `
+          vec2 grainCell = floor(vStaticUv * 180.0) + noiseFrame * vec2(17.0, 29.0);
+          vec3 grain = vec3(staticHash(grainCell), staticHash(grainCell + 31.7), staticHash(grainCell + 73.1));
+          vec3 staticColor = vec3(0.12) + grain * 0.55;
+          outgoingLight = mix(staticColor, max(vec3(0.0), outgoingLight + (grain - 0.5) * 0.12), noiseImage);
+          #include <opaque_fragment>
+        `)
+      }
       screen.depthTest = false
       node.material = screen
       // Flip within the existing UV island, keeping its crop while orienting the artwork.
@@ -210,6 +262,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
       disposeObject(model); onStatus('unavailable'); return
     }
     originalMap = (screen as THREE.MeshStandardMaterial).emissiveMap
+    updateNoise()
     const bounds = new THREE.Box3().setFromObject(model)
     const center = bounds.getCenter(new THREE.Vector3())
     halfSize.copy(bounds.getSize(new THREE.Vector3())).multiplyScalar(0.5)
@@ -233,6 +286,8 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
       disposed = true
       request++
       observer.disconnect()
+      intersection.disconnect()
+      updateNoise()
       cancelMotion()
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerout', onPointerOut)
@@ -242,6 +297,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
       canvas.removeEventListener('webglcontextlost', contextLost)
       if (root) disposeObject(root)
       originalMap?.dispose()
+      originalBaseMap?.dispose()
       textures.forEach((texture) => texture.dispose())
       renderer.dispose()
       queueMicrotask(() => {

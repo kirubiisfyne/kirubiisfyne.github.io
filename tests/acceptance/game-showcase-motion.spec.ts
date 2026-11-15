@@ -30,6 +30,30 @@ test('default TV occupies about 80 percent of canvas height', async ({ page }) =
   expect(ratio).toBeLessThan(0.85)
 })
 
+for (const catalog of ['default', 'empty'] as const) {
+  for (const reduced of [false, true]) {
+    test(`screen static ${catalog} ${reduced ? 'stays still with reduced motion' : 'animates'}`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' })
+      await page.goto(showcaseUrl(catalog))
+      const canvas = page.locator('.tv-canvas')
+      await canvas.scrollIntoViewIfNeeded()
+      if (catalog === 'default') {
+        await expect(page.locator('[data-tv-state]')).toHaveAttribute('data-tv-state', 'ready', { timeout: 20000 })
+      } else {
+        // The empty catalog has no image-ready event; allow the TV model to load.
+        await page.waitForTimeout(3000)
+      }
+      await page.addStyleTag({ content: '.game-carousel nav { visibility: hidden }' })
+      await page.mouse.move(0, 0)
+      await page.waitForTimeout(1000)
+      const first = await canvas.screenshot()
+      await page.waitForTimeout(350)
+      const second = await canvas.screenshot()
+      expect(first.equals(second)).toBe(reduced)
+    })
+  }
+}
+
 for (const reduced of [false, true]) {
   test(`cursor tilt ${reduced ? 'respects reduced motion' : 'moves toward pointer'}`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' })
