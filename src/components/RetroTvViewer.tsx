@@ -5,6 +5,7 @@ export function RetroTvViewer({ image, rotation = 0 }: { readonly image: string 
   const canvas = useRef<HTMLCanvasElement>(null)
   const viewer = useRef<ReturnType<typeof createRetroTvViewer> | null>(null)
   const [status, setStatus] = useState<TvStatus>('loading')
+  const previousImage = useRef<{ image: string | null; rotation: 0 | 180 } | null>(null)
 
   useEffect(() => {
     if (!canvas.current) return
@@ -16,7 +17,18 @@ export function RetroTvViewer({ image, rotation = 0 }: { readonly image: string 
       setStatus('unavailable')
     }
   }, [])
-  useEffect(() => { viewer.current?.setImage(image, rotation) }, [image, rotation])
+  useEffect(() => {
+    const previous = previousImage.current
+    previousImage.current = { image, rotation }
+    if (!previous || (previous.image === image && previous.rotation === rotation)) {
+      viewer.current?.setImage(image, rotation)
+      return
+    }
+
+    viewer.current?.setImage(null)
+    const timer = window.setTimeout(() => viewer.current?.setImage(image, rotation), 300)
+    return () => window.clearTimeout(timer)
+  }, [image, rotation])
 
   return (
     <div className="tv-stage" data-tv-state={status}>

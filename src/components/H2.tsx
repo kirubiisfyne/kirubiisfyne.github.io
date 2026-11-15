@@ -21,7 +21,7 @@ export function H2({ id, label, artworkSrc, artwork, description }: H2Props) {
       <h2 id={id} className="text-[12px] leading-[16px]">
         {label}
       </h2>
-      <p className="min-h-[48px] w-full max-w-[1146px] text-[12px] leading-[16px]">{description}</p>
+      <p className="flex min-h-[48px] w-full max-w-[1146px] items-center justify-center text-[12px] leading-[16px]">{description}</p>
     </div>
   )
 }

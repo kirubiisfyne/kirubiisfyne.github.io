@@ -7,6 +7,7 @@ import { GameShowcase } from '../components/GameShowcase'
 import { H1 } from '../components/H1'
 import { H2 } from '../components/H2'
 import { ProjectCarousel } from '../components/ProjectCarousel'
+import { SkillsSection } from '../components/SkillsSection'
 import { projects } from '../data/projects'
 import { introduction } from '../data/site-copy'
 
@@ -27,6 +28,7 @@ export function PortfolioPage() {
         <ProjectCarousel projects={projects} />
       </section>
       <GameShowcase />
+      <SkillsSection />
     </main>
   )
 }

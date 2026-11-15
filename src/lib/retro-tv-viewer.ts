@@ -131,6 +131,7 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
     if (disposed || contextUnavailable || !screen || !originalMap) return
     const material = screen
     const original = originalMap
+    // Clear the screen while changing channels.
     material.emissiveMap = null
     material.emissive.setRGB(0, 0, 0)
     material.needsUpdate = true

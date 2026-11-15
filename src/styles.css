@@ -42,6 +42,115 @@
   }
 }
 
+.skills-section,
+.skills-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  text-align: center;
+  color: white;
+}
+
+.skills-main-heading,
+.skills-category-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding-top: 20px;
+}
+
+.skills-main-heading { gap: 8px; }
+
+.skills-main-heading h2,
+.skills-category-heading h3,
+.skill-group-title {
+  margin: 0;
+  font: inherit;
+}
+
+.skills-category-heading p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1146px;
+  min-height: 48px;
+  margin: 0;
+}
+
+.skills-heading-art,
+.skills-category-art {
+  position: relative;
+  max-width: 100%;
+  isolation: isolate;
+  background: var(--color-paper);
+}
+
+.skills-heading-art { height: 48px; width: min(100%, calc(31.2 * clamp(6px, 1.8vw, 12px))); }
+.skills-category-art { height: 32px; width: min(100%, calc(30 * clamp(6px, 1.8vw, 12px))); }
+.skills-category-art.creative { width: min(100%, calc(40.8 * clamp(5px, 1.35vw, 12px))); }
+
+.skills-heading-art pre,
+.skills-category-art pre {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  color: white;
+  font: clamp(6px, 1.8vw, 12px)/1.333333 var(--font-mono);
+  white-space: pre;
+  mix-blend-mode: difference;
+}
+
+.skills-category-art.creative pre { font-size: clamp(5px, 1.35vw, 12px); }
+
+.skill-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.skill-group-title { font-weight: bold; }
+
+.skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px 64px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.skill-art {
+  height: 130px;
+  margin: 0;
+  font: 800 6px/10px var(--font-mono);
+  letter-spacing: .6px;
+  white-space: pre;
+}
+
+.skill-name {
+  font-weight: bold;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+
 .game-showcase {
   position: relative;
   display: flex;
@@ -63,9 +172,12 @@
 
 .game-dev-artwork pre {
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   margin: 0;
   color: white;
-  font: 12px/12px var(--font-mono);
+  font: 12px/16px var(--font-mono);
   white-space: pre;
   mix-blend-mode: difference;
 }
