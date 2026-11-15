@@ -3,7 +3,7 @@ import navigationDefault from '../assets/figma/navigation-default.svg'
 import navigationHover from '../assets/figma/navigation-hover.svg'
 import playArtwork from '../assets/figma/view-play.svg'
 import { games as defaultGames, type Game } from '../data/games'
-import { introduction } from '../data/site-copy'
+import { gameDescription } from '../data/site-copy'
 import { H2 } from './H2'
 import { RetroTvViewer } from './RetroTvViewer'
 
@@ -29,7 +29,7 @@ export function GameShowcase({ games = defaultGames }: { readonly games?: readon
       <H2
         id="game-showcase-heading"
         label="[ Game Dev ]"
-        description={introduction}
+        description={gameDescription}
         artwork={<div className="game-dev-artwork" aria-hidden="true"><pre>{gameDevAscii}</pre></div>}
       />
       <div className="game-carousel" style={navigationArtwork}>

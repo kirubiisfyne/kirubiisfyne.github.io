@@ -9,7 +9,7 @@ import { H2 } from '../components/H2'
 import { ProjectCarousel } from '../components/ProjectCarousel'
 import { SkillsSection } from '../components/SkillsSection'
 import { projects } from '../data/projects'
-import { introduction } from '../data/site-copy'
+import { artDescription, introduction } from '../data/site-copy'
 
 export function PortfolioPage() {
   return (
@@ -24,7 +24,7 @@ export function PortfolioPage() {
       </div>
       <H1 id="projects" label="[ PROJECTS ]" artworkSrc={projectsArtwork} />
       <section aria-labelledby="art" className="flex flex-col gap-[20px]">
-        <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={introduction} />
+        <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={artDescription} />
         <ProjectCarousel projects={projects} />
       </section>
       <GameShowcase />

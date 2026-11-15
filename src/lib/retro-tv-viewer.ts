@@ -235,7 +235,8 @@ export function createRetroTvViewer(canvas: HTMLCanvasElement, onStatus: (state:
           vec2 grainCell = floor(vStaticUv * 180.0) + noiseFrame * vec2(17.0, 29.0);
           vec3 grain = vec3(staticHash(grainCell), staticHash(grainCell + 31.7), staticHash(grainCell + 73.1));
           vec3 staticColor = vec3(0.12) + grain * 0.55;
-          outgoingLight = mix(staticColor, max(vec3(0.0), outgoingLight + (grain - 0.5) * 0.12), noiseImage);
+          vec3 lightenedImage = mix(outgoingLight, max(outgoingLight, grain), 0.12);
+          outgoingLight = mix(staticColor, lightenedImage, noiseImage);
           #include <opaque_fragment>
         `)
       }
