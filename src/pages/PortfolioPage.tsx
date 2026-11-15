@@ -3,6 +3,7 @@ import greeting from '../assets/figma/greeting.svg'
 import greetingStrip from '../assets/figma/greeting-strip.svg'
 import projectsArtwork from '../assets/figma/projects-ascii.svg'
 import wordmark from '../assets/figma/wordmark.svg'
+import { ConnectSection } from '../components/ConnectSection'
 import { GameShowcase } from '../components/GameShowcase'
 import { H1 } from '../components/H1'
 import { H2 } from '../components/H2'
@@ -13,6 +14,7 @@ import { artDescription, introduction } from '../data/site-copy'
 
 export function PortfolioPage() {
   return (
+    <>
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-[20px] p-[20px] sm:p-[40px] lg:p-[64px]">
       <header className="flex flex-col items-start gap-[8px]">
         <img src={greeting} alt="Hi! Kirby Bilbao, Greeting you!" width={248} height={12} />
@@ -30,5 +32,7 @@ export function PortfolioPage() {
       <GameShowcase />
       <SkillsSection />
     </main>
+    <ConnectSection />
+    </>
   )
 }
