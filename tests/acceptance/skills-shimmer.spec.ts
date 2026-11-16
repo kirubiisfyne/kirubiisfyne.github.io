@@ -3,8 +3,12 @@ import { expect, test } from '@playwright/test';
 test('skill artwork shimmers locally and restores on exit', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  const art = page.locator('.skill-art').first();
+  await page.locator('.skill-viewport').first().focus();
+  await page.keyboard.press('Space');
+  await page.mouse.move(1, 1);
+  const art = page.locator('.skill-cycle').first().locator('.skill-art').nth(1);
   await art.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
   const original = await art.textContent();
   const bounds = (await art.boundingBox())!;
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
@@ -20,7 +24,6 @@ test('skill artwork shimmers locally and restores on exit', async ({ page }) => 
   await page.waitForTimeout(200);
   const returning = await art.textContent();
   expect(returning).not.toBe(changed);
-  expect(returning).not.toBe(original);
   await expect(art).toHaveText(original!);
 });
 

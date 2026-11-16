@@ -1,28 +1,28 @@
-# Graph Report - portfolio  (2026-11-06)
+# Graph Report - portfolio  (2026-11-16)
 
 ## Corpus Check
-- 47 files · ~140,769 words
+- 71 files · ~153,145 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 15 file(s) not represented in the graph (top: .glb 12, (none) 2, .css 1)
+- Unclassified: 18 file(s) not represented in the graph (top: .glb 13, (none) 2, .bin 1)
 
 ## Summary
-- 532 nodes · 792 edges · 36 communities (33 shown, 3 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.82)
+- 608 nodes · 933 edges · 49 communities (45 shown, 4 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b7b741ec`
+- Built from commit: `1e17eeb0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- ProjectCarousel.tsx
+- PortfolioPage.tsx
 - createModelViewer
 - steps
 - @playwright/test
 - extension
 - biome.json
-- PortfolioPage.tsx
+- GameShowcase.tsx
 - harness.tsx
 - steps
 - common.sh
@@ -49,53 +49,66 @@
 - before_plan
 - before_tasks
 - before_taskstoissues
-- vite
+- settlement.spec.ts
 - @vitejs/plugin-react
+- mountAsciiMetaballs
+- ModelViewer
+- model-viewer.ts
+- ModelViewer.tsx
+- ModelViewerController
+- dependencies
+- retro-tv-assets.ts
+- visit
+- ModelViewer.tsx
+- SkillsSection.tsx
+- PortfolioPage
+- ProjectCarousel
+- ConnectSection.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `createModelViewer()` - 49 edges
 2. `draw()` - 21 edges
-3. `hooks` - 19 edges
-4. `releaseRuntime()` - 17 edges
-5. `compilerOptions` - 15 edges
-6. `Project` - 12 edges
-7. `ViewerAcceptanceHooks` - 10 edges
-8. `ProjectCarousel()` - 10 edges
-9. `mountAsciiMetaballs()` - 10 edges
-10. `fail()` - 9 edges
+3. `@playwright/test` - 21 edges
+4. `hooks` - 19 edges
+5. `releaseRuntime()` - 17 edges
+6. `compilerOptions` - 15 edges
+7. `react` - 14 edges
+8. `Project` - 12 edges
+9. `ViewerAcceptanceHooks` - 10 edges
+10. `mountAsciiMetaballs()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `PresentationDraw` --references--> `ViewerStatus`  [EXTRACTED]
-  tests/acceptance/harness.tsx → src/lib/model-viewer.ts
 - `Window` --references--> `Project`  [EXTRACTED]
   tests/acceptance/harness.tsx → src/types/project.ts
-- `HarnessApp()` --calls--> `ProjectCarousel()`  [EXTRACTED]
-  tests/acceptance/harness.tsx → src/components/ProjectCarousel.tsx
+- `PresentationDraw` --references--> `ViewerStatus`  [EXTRACTED]
+  tests/acceptance/harness.tsx → src/lib/model-viewer.ts
 - `MetaballBackground()` --calls--> `mountAsciiMetaballs()`  [EXTRACTED]
   src/components/MetaballBackground.tsx → ascii-metaballs.js
-- `ProjectCarouselProps` --references--> `Project`  [EXTRACTED]
-  src/components/ProjectCarousel.tsx → src/types/project.ts
+- `HarnessApp()` --calls--> `ProjectCarousel()`  [EXTRACTED]
+  tests/acceptance/harness.tsx → src/components/ProjectCarousel.tsx
+- `Harness()` --calls--> `GameShowcase()`  [EXTRACTED]
+  tests/acceptance/game-showcase-harness.tsx → src/components/GameShowcase.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (36 total, 3 thin omitted)
+## Communities (49 total, 4 thin omitted)
 
-### Community 0 - "ProjectCarousel.tsx"
-Cohesion: 0.05
-Nodes (36): CarouselMetadata(), CarouselMetadataProps, MetadataAcceptanceHooks, MetadataPart, ModelViewer(), ModelViewerProps, AcceptanceControls, MetadataProof (+28 more)
+### Community 0 - "PortfolioPage.tsx"
+Cohesion: 0.14
+Nodes (9): H1(), H1Props, filenameCounts, projects, artDescription, creativeStackDescription, gameDescription, introduction (+1 more)
 
 ### Community 1 - "createModelViewer"
 Cohesion: 0.12
-Nodes (50): attachDither(), createModelViewer(), acquireController(), alive(), animationTime(), applyMode(), applyRotation(), assignments() (+42 more)
+Nodes (51): attachDither(), createModelViewer(), acquireController(), alive(), animationTime(), applyMode(), applyRotation(), assignments() (+43 more)
 
 ### Community 2 - "steps"
 Cohesion: 0.06
 Nodes (34): args, inputs, integration, scope, spec, default, prompt, type (+26 more)
 
 ### Community 3 - "@playwright/test"
-Cohesion: 0.07
-Nodes (17): @playwright/test@1.64.1, @playwright/test, holdModelLoad(), CompositorObserver, DecodedPixels, FrameRecord, Window, Draw (+9 more)
+Cohesion: 0.11
+Nodes (13): @playwright/test, disableWebGL(), failAsset(), holdAsset(), interceptAsset(), showcaseUrl(), useTvTransform(), capture() (+5 more)
 
 ### Community 4 - "extension"
 Cohesion: 0.06
@@ -105,9 +118,9 @@ Nodes (31): description, file, name, config, defaults, description, name, requir
 Cohesion: 0.06
 Nodes (30): noInteractiveElementToNoninteractiveRole, useSemanticElements, noUnusedVariables, useExhaustiveDependencies, files, includes, formatter, enabled (+22 more)
 
-### Community 6 - "PortfolioPage.tsx"
-Cohesion: 0.11
-Nodes (15): METABALL_CONFIG, mountAsciiMetaballs(), draw(), resize(), smoothstep(), syncMotion(), tick(), react (+7 more)
+### Community 6 - "GameShowcase.tsx"
+Cohesion: 0.14
+Nodes (10): gameDevAscii, GameShowcase(), navigationArtwork, H2(), H2Props, Game, games, ids (+2 more)
 
 ### Community 7 - "harness.tsx"
 Cohesion: 0.07
@@ -126,16 +139,16 @@ Cohesion: 0.12
 Nodes (16): compilerOptions, allowJs, checkJs, jsx, lib, module, moduleResolution, noEmit (+8 more)
 
 ### Community 11 - "package.json"
-Cohesion: 0.16
-Nodes (14): dependencies, @fontsource/jetbrains-mono@5.3.0, react@19.3.1, react-dom@19.3.1, three@0.186.1, engines, node, name (+6 more)
+Cohesion: 0.18
+Nodes (10): @types/node@24.19.2, @types/react@^19.2.0, engines, node, name, private, type, version (+2 more)
 
 ### Community 12 - "devDependencies"
-Cohesion: 0.13
-Nodes (15): devDependencies, @biomejs/biome@^2.6.4, tailwindcss@4.3.3, @types/node@24.19.2, @types/react@^19.2.0, @types/react-dom@^19.2.0, @types/three@0.186.0, typescript@7.0.2 (+7 more)
+Cohesion: 0.17
+Nodes (12): devDependencies, @biomejs/biome@^2.6.4, @playwright/test@1.64.1, tailwindcss@4.3.3, @types/react-dom@^19.2.0, @types/three@0.186.0, typescript@7.0.2, @biomejs/biome (+4 more)
 
 ### Community 13 - "vite.config.ts"
 Cohesion: 0.17
-Nodes (7): @tailwindcss/vite@4.3.3, @tailwindcss/vite, discoverModelPaths(), visit(), modelConfigPaths, modelPaths, modelRoot
+Nodes (7): @tailwindcss/vite@4.3.3, vite@8.3.5, @tailwindcss/vite, vite, modelConfigPaths, modelPaths, modelRoot
 
 ### Community 14 - "hooks"
 Cohesion: 0.22
@@ -213,23 +226,71 @@ Nodes (5): command, description, optional, prompt, before_tasks
 Cohesion: 0.40
 Nodes (5): command, description, optional, prompt, before_taskstoissues
 
+### Community 33 - "settlement.spec.ts"
+Cohesion: 0.11
+Nodes (10): CompositorObserver, DecodedPixels, FrameRecord, Window, expectRest(), ids, lastStage(), Participant (+2 more)
+
+### Community 36 - "mountAsciiMetaballs"
+Cohesion: 0.50
+Nodes (6): mountAsciiMetaballs(), draw(), resize(), smoothstep(), syncMotion(), tick()
+
+### Community 37 - "ModelViewer"
+Cohesion: 0.50
+Nodes (3): ModelViewer(), ViewModeControls(), ViewerCallbacks
+
+### Community 38 - "model-viewer.ts"
+Cohesion: 0.20
+Nodes (15): CarouselMetadataProps, MetadataPart, ModelViewerProps, ProjectCarouselProps, contextOwners, LoadContext, LoadResources, MetadataTicket (+7 more)
+
+### Community 39 - "ModelViewer.tsx"
+Cohesion: 0.22
+Nodes (3): MetadataAcceptanceHooks, AcceptanceControls, ViewerAcceptanceHooks
+
+### Community 41 - "dependencies"
+Cohesion: 0.25
+Nodes (8): dependencies, @fontsource/jetbrains-mono@5.3.0, react@19.3.1, react-dom@19.3.1, three@0.186.1, @fontsource/jetbrains-mono, react-dom, three
+
+### Community 42 - "retro-tv-assets.ts"
+Cohesion: 0.14
+Nodes (7): RetroTvViewer(), tvTransform, tvDependencies, tvModelUrl, contextOwners, createRetroTvViewer(), TvStatus
+
+### Community 44 - "ModelViewer.tsx"
+Cohesion: 0.29
+Nodes (4): react, modes, ViewModeControlsProps, DisplayMode
+
+### Community 45 - "SkillsSection.tsx"
+Cohesion: 0.23
+Nodes (9): headingArtwork, SkillConveyor(), SkillsSection(), skillGroups, Belt, collectIcons(), GLYPH_GROUPS, Icon (+1 more)
+
+### Community 46 - "PortfolioPage"
+Cohesion: 0.39
+Nodes (4): METABALL_CONFIG, App(), MetaballBackground(), PortfolioPage()
+
+### Community 47 - "ProjectCarousel"
+Cohesion: 0.19
+Nodes (8): CarouselMetadata(), MetadataProof, ModelViewer, modelViewerPromise, navigationArtwork, ProjectCarousel(), Selection, ViewerBoundary
+
+### Community 48 - "ConnectSection.tsx"
+Cohesion: 0.40
+Nodes (4): ConnectSection(), LinkGroup(), professionalLinks, socialLinks
+
 ## Knowledge Gaps
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `PortfolioPage.tsx` to `ProjectCarousel.tsx`, `package.json`, `harness.tsx`?**
-  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+- **Why does `react` connect `ModelViewer.tsx` to `model-viewer.ts`, `GameShowcase.tsx`, `harness.tsx`, `dependencies`, `retro-tv-assets.ts`, `package.json`, `SkillsSection.tsx`, `PortfolioPage`, `ProjectCarousel`?**
+  _High betweenness centrality (0.122) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `createModelViewer()` (e.g. with `canvasBlur()` and `canvasFocus()`) actually correct?**
   _`createModelViewer()` has 11 INFERRED edges - model-reasoned connections that need verification._
-- **Should `ProjectCarousel.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05268065268065268 - nodes in this community are weakly interconnected._
-- **Why does `createModelViewer()` connect `createModelViewer` to `ProjectCarousel.tsx`, `createLoadResources`?**
-  _High betweenness centrality (0.074) - this node is a cross-community bridge._
+- **Should `PortfolioPage.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.13725490196078433 - nodes in this community are weakly interconnected._
+- **Why does `@playwright/test` connect `@playwright/test` to `settlement.spec.ts`, `package.json`, `devDependencies`, `SkillsSection.tsx`?**
+  _High betweenness centrality (0.086) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `releaseRuntime()` (e.g. with `canvasBlur()` and `canvasFocus()`) actually correct?**
   _`releaseRuntime()` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **Should `createModelViewer` be split into smaller, more focused modules?**
-  _Cohesion score 0.12489795918367347 - nodes in this community are weakly interconnected._
-- **Why does `@playwright/test` connect `@playwright/test` to `package.json`?**
-  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+  _Cohesion score 0.1207843137254902 - nodes in this community are weakly interconnected._
+- **Why does `createModelViewer()` connect `createModelViewer` to `createLoadResources`, `ModelViewer`, `model-viewer.ts`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._

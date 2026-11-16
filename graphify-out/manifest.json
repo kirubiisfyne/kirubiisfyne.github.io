@@ -19,11 +19,10 @@
     "semantic_hash": "be745a4262834605ca088d44cfdefe8e"
   },
   ".specify/feature.json": {
-    "mtime": 1793889184.9313943,
-    "seen": 1793938343.765877,
-    "ast_hash": "ad0baa093106bd850d353ce6f9a0ae1c",
-    "semantic_hash": "ad0baa093106bd850d353ce6f9a0ae1c",
-    "ast_empty": true
+    "mtime": 1794056877.6285615,
+    "seen": 1794057034.1125052,
+    "ast_hash": "5f087324c119fa0efa08eda18172a044",
+    "semantic_hash": ""
   },
   ".specify/init-options.json": {
     "mtime": 1793889634.2008922,
@@ -174,9 +173,9 @@
     "semantic_hash": "2f431c26ac66126a84809df19e87eb1a"
   },
   "src/components/H2.tsx": {
-    "mtime": 1793945766.566281,
-    "seen": 1793950378.5976179,
-    "ast_hash": "d2ce47faf4f0b2b9146dce6b6eb91906",
+    "mtime": 1794357535.2062402,
+    "seen": 1794357631.5497391,
+    "ast_hash": "c4f5d6cf85352563daa3e399d5e6800e",
     "semantic_hash": ""
   },
   "src/components/MetaballBackground.tsx": {
@@ -210,9 +209,9 @@
     "semantic_hash": "e303192f9be3e7bfa7d7773120c8748a"
   },
   "src/lib/model-viewer.ts": {
-    "mtime": 1793956805.3759458,
-    "seen": 1793956830.293057,
-    "ast_hash": "673e6c88be640d23d4afd01b432abec9",
+    "mtime": 1793958754.3073757,
+    "seen": 1794057034.112525,
+    "ast_hash": "36f3c3ce66a417d9ac3853ab18312f0f",
     "semantic_hash": ""
   },
   "src/main.tsx": {
@@ -222,10 +221,10 @@
     "semantic_hash": "d5b8d515e5476ebf67fb4dfb1352ac9c"
   },
   "src/pages/PortfolioPage.tsx": {
-    "mtime": 1793889184.93531,
-    "seen": 1793938343.766198,
-    "ast_hash": "645afedf2d182d1e94c52bee3e524a0e",
-    "semantic_hash": "645afedf2d182d1e94c52bee3e524a0e"
+    "mtime": 1794735345.9850998,
+    "seen": 1794735367.9563541,
+    "ast_hash": "c08fec0cd54c351e5ec163c463b50120",
+    "semantic_hash": ""
   },
   "src/types/project.ts": {
     "mtime": 1793889184.935787,
@@ -870,9 +869,9 @@
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1793889184.9324985,
-    "seen": 1793942831.131976,
-    "ast_hash": "d520b2b53a61fa33ead29e61a0838704",
+    "mtime": 1794068201.2752275,
+    "seen": 1794069464.089891,
+    "ast_hash": "1e0f0f187175e8b081fa235314fa65e9",
     "semantic_hash": ""
   },
   "specs/001-react-portfolio/checklists/requirements.md": {
@@ -1353,6 +1352,270 @@
     "mtime": 1793161213.2505593,
     "seen": 1793942831.132015,
     "ast_hash": "362bdf4bf3861a19d33a497c2c06d009",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/checklists/requirements.md": {
+    "mtime": 1794056928.6799166,
+    "seen": 1794057034.11261,
+    "ast_hash": "6db04d5060c607cf289de2e6459013fb",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/contracts/showcase.md": {
+    "mtime": 1794062106.8105428,
+    "seen": 1794062127.783614,
+    "ast_hash": "8fb11e3f7f638612b5b6c95340c4a251",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/data-model.md": {
+    "mtime": 1794063018.13255,
+    "seen": 1794064920.514526,
+    "ast_hash": "3b243ff53bec0c675fe1cf27b2e988c6",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/plan.md": {
+    "mtime": 1794062075.5703247,
+    "seen": 1794062127.783617,
+    "ast_hash": "d59fef3e2b060127115acf56b2e524ee",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/quickstart.md": {
+    "mtime": 1794069451.1059933,
+    "seen": 1794069464.0899131,
+    "ast_hash": "62a8f5bd49209bc427f67d3a7cc77bd7",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/research.md": {
+    "mtime": 1794064867.944532,
+    "seen": 1794064920.514528,
+    "ast_hash": "684ae1da1d253909bccaeee9a1908512",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/spec.md": {
+    "mtime": 1794063517.089071,
+    "seen": 1794064920.514529,
+    "ast_hash": "21278c368b550aab64ce85ca7d884253",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_Screen_baseColor.png": {
+    "mtime": 1794050153.5765495,
+    "seen": 1794057034.1126149,
+    "ast_hash": "f48973b386203d4274f53760076ce34a",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_Screen_normal.png": {
+    "mtime": 1794050154.3324711,
+    "seen": 1794057034.1126158,
+    "ast_hash": "1d552de8552e7b9126c96a7b55f7a1ab",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_Screen_occlusionRoughnessMetallic.png": {
+    "mtime": 1794050153.4926083,
+    "seen": 1794057034.112617,
+    "ast_hash": "4451ee35ea22ce1881bfef3690fe79b6",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_TV_baseColor.png": {
+    "mtime": 1794050153.681983,
+    "seen": 1794057034.112617,
+    "ast_hash": "9a354289d06162f844716b702eb2607d",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_TV_normal.png": {
+    "mtime": 1794050154.3439593,
+    "seen": 1794057034.112618,
+    "ast_hash": "e125e670830727eabd6583db5cbea9be",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_TV_occlusionRoughnessMetallic.png": {
+    "mtime": 1794050153.7178931,
+    "seen": 1794057034.112618,
+    "ast_hash": "52b96d5503e5b3d583c2032b08c6a499",
+    "semantic_hash": ""
+  },
+  "games/anii/emissive.png": {
+    "mtime": 1794050153.1646335,
+    "seen": 1794062127.783623,
+    "ast_hash": "ec4980aba717dc319873980338d3ddd3",
+    "semantic_hash": ""
+  },
+  "games/kontexto/emissive.png": {
+    "mtime": 1794051299.9821556,
+    "seen": 1794062127.783625,
+    "ast_hash": "dd796e5ccd08b2cd5c26723cf9a616b2",
+    "semantic_hash": ""
+  },
+  "gltf/practice_tv/m_Screen_emissive.png": {
+    "mtime": 1794061835.5257719,
+    "seen": 1794062127.783627,
+    "ast_hash": "bd891637a111e32485420bc694060197",
+    "semantic_hash": ""
+  },
+  "src/components/GameShowcase.tsx": {
+    "mtime": 1794724001.5187721,
+    "seen": 1794724006.28829,
+    "ast_hash": "5f2df5dd3b889679563a402c3b44355a",
+    "semantic_hash": ""
+  },
+  "src/components/RetroTvViewer.tsx": {
+    "mtime": 1794365355.3151975,
+    "seen": 1794365371.225333,
+    "ast_hash": "4e6f51fb752170319001cc00620c7869",
+    "semantic_hash": ""
+  },
+  "src/data/games.ts": {
+    "mtime": 1794151022.7272954,
+    "seen": 1794151146.198984,
+    "ast_hash": "6e6d5f2ae344c7aa69ebd442480c4378",
+    "semantic_hash": ""
+  },
+  "src/data/tv-transform.ts": {
+    "mtime": 1794067654.9113173,
+    "seen": 1794067704.621239,
+    "ast_hash": "316a70da56709e2e0ca769101ac059b8",
+    "semantic_hash": ""
+  },
+  "src/lib/retro-tv-assets.ts": {
+    "mtime": 1794063870.4502237,
+    "seen": 1794064920.5144372,
+    "ast_hash": "64a660903eafa5f1fa22de523f17da08",
+    "semantic_hash": ""
+  },
+  "src/lib/retro-tv-viewer.ts": {
+    "mtime": 1794724108.768434,
+    "seen": 1794724114.621504,
+    "ast_hash": "b965da9f7ac8b0933a1baaea97378c48",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-display.spec.ts": {
+    "mtime": 1794104043.7868867,
+    "seen": 1794104306.9258711,
+    "ast_hash": "820e33d5fcbbbd10b8c68d15ee07007d",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-failures.spec.ts": {
+    "mtime": 1794149875.885757,
+    "seen": 1794150453.180105,
+    "ast_hash": "3815895df429a29dbd32b610741be2eb",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-harness.tsx": {
+    "mtime": 1794068987.1365664,
+    "seen": 1794069464.089828,
+    "ast_hash": "708a316edb63f93dba71290fa2753836",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-navigation.spec.ts": {
+    "mtime": 1794099032.0881853,
+    "seen": 1794101053.002479,
+    "ast_hash": "899885d0fed863c337a4f0b7bb314eac",
+    "semantic_hash": ""
+  },
+  "specs/005-retro-tv-showcase/tasks.md": {
+    "mtime": 1794069457.654985,
+    "seen": 1794069464.0899148,
+    "ast_hash": "87a778b85523fcfda901d3da23ffd8d8",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase.html": {
+    "mtime": 1794063993.943251,
+    "seen": 1794064920.51453,
+    "ast_hash": "0d7c4e05159c1b8fd2a140ab06c8e0ec",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-fixtures.ts": {
+    "mtime": 1794067421.8486738,
+    "seen": 1794067502.477524,
+    "ast_hash": "3cc8456b6f8fa05a52df375164f5d102",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-owner.spec.ts": {
+    "mtime": 1794067442.9742875,
+    "seen": 1794067502.477526,
+    "ast_hash": "7f5ebad0fbfd78d840750c6e30467e19",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-lifecycle.spec.ts": {
+    "mtime": 1794069059.1678808,
+    "seen": 1794069464.0898292,
+    "ast_hash": "a5f5b05a4f0b2cc6f09fd887bd65e0e3",
+    "semantic_hash": ""
+  },
+  "src/data/site-copy.ts": {
+    "mtime": 1794724001.5135338,
+    "seen": 1794724006.288297,
+    "ast_hash": "ceda79765f8f0c38fdb2053aa400747d",
+    "semantic_hash": ""
+  },
+  "src/assets/figma/view-play.svg": {
+    "mtime": 1794148718.6257029,
+    "seen": 1794148928.5413141,
+    "ast_hash": "a6021c3604c0c8f272b37352c9f75d1a",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/game-showcase-motion.spec.ts": {
+    "mtime": 1794722508.187437,
+    "seen": 1794722526.608063,
+    "ast_hash": "a4994b0586f8d90fc4f20f367d6e4e83",
+    "semantic_hash": ""
+  },
+  "src/components/SkillsSection.tsx": {
+    "mtime": 1794798004.924906,
+    "seen": 1794798068.4035578,
+    "ast_hash": "07e0db15fedc85cc5e70ac2360eb072d",
+    "semantic_hash": ""
+  },
+  "src/data/skills.ts": {
+    "mtime": 1794327053.731969,
+    "seen": 1794328104.481896,
+    "ast_hash": "015dd5a8aedc3f673c5f4f4845a54366",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/skills-headings.spec.ts": {
+    "mtime": 1794356944.0205302,
+    "seen": 1794357001.389342,
+    "ast_hash": "0b09adb6613bc920124ad162b7af3306",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/project-headings.spec.ts": {
+    "mtime": 1794357577.6575563,
+    "seen": 1794357631.549773,
+    "ast_hash": "5bb2549742c57b9bbb2d7b0bb6210dc7",
+    "semantic_hash": ""
+  },
+  "src/lib/ascii-shimmer.ts": {
+    "mtime": 1794798032.4739823,
+    "seen": 1794798068.403562,
+    "ast_hash": "15742532b67fdba8f789d97c8d1151c3",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/skills-shimmer.spec.ts": {
+    "mtime": 1794798060.773866,
+    "seen": 1794798068.4035761,
+    "ast_hash": "9c3477f7f609b476522ef92d26c3fe49",
+    "semantic_hash": ""
+  },
+  "src/components/ConnectSection.tsx": {
+    "mtime": 1794736584.4467223,
+    "seen": 1794736596.5069308,
+    "ast_hash": "a426f603d6646957fbec56009d5b56ac",
+    "semantic_hash": ""
+  },
+  "src/assets/bilbao-kirby-resume.pdf": {
+    "mtime": 1794735322.8031783,
+    "seen": 1794735367.9564428,
+    "ast_hash": "2af26a2a050297a04b372525d490e91f",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/skills-conveyor.spec.ts": {
+    "mtime": 1794798056.33019,
+    "seen": 1794798068.403575,
+    "ast_hash": "e96f598fd59bc8da48099e9dada79300",
+    "semantic_hash": ""
+  },
+  "tests/acceptance/skills-touch.spec.ts": {
+    "mtime": 1794798125.220804,
+    "seen": 1794798146.8711889,
+    "ast_hash": "35141599adc7294a2b6028fa0fbc8c0d",
     "semantic_hash": ""
   },
   "package-lock.json": {

@@ -131,8 +131,7 @@
 .skills-main-heading { gap: 8px; }
 
 .skills-main-heading h2,
-.skills-category-heading h3,
-.skill-group-title {
+.skills-category-heading h3 {
   margin: 0;
   font: inherit;
 }
@@ -174,26 +173,34 @@
 
 .skills-category-art.creative pre { font-size: clamp(5px, 1.35vw, 12px); }
 
-.skill-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  width: 100%;
-}
-
-.skill-group-title { font-weight: bold; }
-
-.skill-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 24px 64px;
-  margin: 0;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   padding: 0;
-  list-style: none;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
+
+.skill-viewport {
+  width: 100%;
+  padding-block: 32px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  mask-image: linear-gradient(to right, transparent, #000 min(15%, 100px), #000 max(85%, calc(100% - 100px)), transparent);
+}
+
+.skill-viewport[data-dragging] { cursor: grabbing; }
+.skill-viewport:focus-visible { outline: 2px solid white; outline-offset: -3px; }
+
+.skill-track, .skill-cycle { display: flex; width: max-content; }
+.skill-cycle { flex: none; align-items: flex-start; gap: 64px; padding-right: 64px; }
+.skill-track { will-change: transform; }
 
 .skill-item {
   display: flex;
@@ -214,6 +221,13 @@
   font-weight: bold;
   letter-spacing: .1em;
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-viewport { overflow: visible; mask-image: none; cursor: auto; touch-action: auto; }
+  .skill-track { width: 100%; transform: none !important; }
+  .skill-cycle { width: 100%; flex-wrap: wrap; justify-content: center; gap: 24px 64px; padding: 0; }
+  .skill-cycle[ data-skill-copy ] { display: none; }
 }
 
 .game-showcase {
