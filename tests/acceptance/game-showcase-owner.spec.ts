@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { showcaseUrl, useTvTransform } from './game-showcase-fixtures'
+import { navigateGame, showcaseUrl, useTvTransform } from './game-showcase-fixtures'
 
 test('additional catalog entry participates without component registration', async ({ page }) => {
   await page.goto(showcaseUrl('extended'))
-  await page.getByRole('button', { name: 'Previous' }).click()
+  await navigateGame(page, 'previous')
   await expect(page.getByRole('heading', { name: 'Fixture Extra Game' })).toBeVisible()
   await expect(page.locator('[aria-live="polite"]').filter({ hasText: 'Fixture Extra Game' })).toHaveText('Fixture Extra Game, 3 of 3')
-  await page.getByRole('button', { name: 'Next' }).click()
+  await navigateGame(page, 'next')
   await expect(page.getByRole('heading', { name: 'KonTEXTo' })).toBeVisible()
 })
 

@@ -301,17 +301,61 @@
 }
 
 .tv-stage {
+  /* Increase to extend the absolute canvas vertically without changing stage layout. */
+  --game-canvas-height-scale: 1.5;
   position: relative;
-  height: clamp(240px, 60vw, 604px);
+  height: clamp(360px, 60vw, 564px);
+}
+
+.game-canvas-layer {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .tv-canvas {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100vw;
+  display: block;
+  width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.game-controller-navigation {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.game-controller-navigation .game-navigation-button { pointer-events: none; }
+.game-controller-navigation:not([data-controller-state="ready"]) { visibility: hidden; }
+.game-carousel .game-controller-navigation[data-controller-state="ready"] .game-navigation-button {
+  width: var(--hit-width, 12px);
+  min-width: 0;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+.game-carousel .game-controller-navigation[data-controller-state="ready"] .navigation-previous {
+  left: var(--previous-x);
+  top: var(--previous-y);
+  right: auto;
+}
+.game-carousel .game-controller-navigation[data-controller-state="ready"] .navigation-next {
+  left: var(--next-x);
+  top: var(--next-y);
+  right: auto;
+}
+.game-controller-navigation[data-controller-state="ready"] .navigation-artwork { display: none; }
+
+.game-navigation-instructions {
+  z-index: 1;
+  margin: 0;
+}
+.tv-stage:has(.tv-canvas:focus-visible) .game-navigation-instructions {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
 .tv-status {
@@ -322,9 +366,9 @@
   pointer-events: none;
 }
 
-.game-details { margin: 32px auto 0; }
+.game-details { margin: 4px auto 0; }
 .game-description { margin: 0; font-size: 12px; line-height: 16px; overflow-wrap: anywhere; }
-.game-play { width: 158px; margin: 12px auto 0; padding: 0; color: inherit; text-decoration: none; cursor: pointer; }
+.game-play { width: 158px; margin: 0 auto 12px; padding: 0; color: inherit; text-decoration: none; cursor: pointer; }
 .game-play:focus-visible { outline: 2px solid white; outline-offset: 6px; }
 .game-announcement, .game-link-hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
@@ -433,11 +477,13 @@
   display: none;
 }
 
-.viewer-instructions {
+.viewer-instructions,
+.game-navigation-instructions {
   position: absolute;
   inset-inline: 4px;
   bottom: 2px;
-  font-size: 10px;
+  font-size: 12px;
+  color: #ebebeb80;
   line-height: 14px;
   pointer-events: none;
 }

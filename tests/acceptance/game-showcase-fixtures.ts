@@ -5,6 +5,14 @@ export function showcaseUrl(catalog: 'default' | 'empty' | 'single' | 'extended'
   return `/tests/acceptance/game-showcase.html?catalog=${catalog}`
 }
 
+/** Navigate through the same keyboard-accessible viewer used when WebGL is unavailable. */
+export async function navigateGame(page: Page, direction: 'previous' | 'next'): Promise<void> {
+  const viewer = page.getByRole('application', { name: 'Game navigation' })
+  await viewer.focus()
+  await viewer.press(direction === 'previous' ? 'ArrowLeft' : 'ArrowRight')
+  await viewer.blur()
+}
+
 /** Override authored transform in the dev acceptance module only. */
 export async function useTvTransform(page: Page, transform: {
   position: readonly [number, number, number]

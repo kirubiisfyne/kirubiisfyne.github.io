@@ -109,7 +109,7 @@ export default function ModelViewer({
           {message}
         </p>
         <p id={instructionsId} className="viewer-instructions">
-          Drag / arrows: inspect · Release / Tab: return
+          [ Drag / arrows: inspect ] [ Release / Tab: return ]
         </p>
       </div>
       <ViewModeControls mode={mode} disabled={!modesAvailable} onModeChange={setMode} />

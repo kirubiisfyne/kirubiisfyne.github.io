@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { showcaseUrl } from './game-showcase-fixtures'
+import { navigateGame, showcaseUrl } from './game-showcase-fixtures'
 
 test('Strict Mode replay and repeated mount, navigation, and unmount stay clean', async ({ page }) => {
   const errors: string[] = []
@@ -15,7 +15,7 @@ test('Strict Mode replay and repeated mount, navigation, and unmount stay clean'
     await page.locator('canvas').evaluate((canvas) => {
       ;(window as unknown as { previousTvContext: WebGL2RenderingContext | null }).previousTvContext = (canvas as HTMLCanvasElement).getContext('webgl2')
     })
-    for (let step = 0; step < 4; step++) await page.getByRole('button', { name: 'Next' }).click()
+    for (let step = 0; step < 4; step++) await navigateGame(page, 'next')
     await expect(page.getByRole('heading', { name: 'KonTEXTo' })).toBeVisible()
     await toggle.click()
     await expect(page.locator('canvas')).toHaveCount(0)
