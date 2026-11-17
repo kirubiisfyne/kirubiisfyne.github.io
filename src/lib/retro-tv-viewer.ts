@@ -10,6 +10,11 @@ export type TvStatus = 'loading' | 'ready' | 'unavailable'
 // Strict Mode can immediately reclaim the same canvas after cleanup.
 const contextOwners = new WeakMap<HTMLCanvasElement, THREE.WebGLRenderer>()
 
+// Screen-edge dithering: grid resolution, fade width in UV space, and random variation.
+const SCREEN_EDGE_PIXELS = 140
+const SCREEN_EDGE_FADE = 0.05
+const SCREEN_EDGE_RANDOMNESS = 0.2
+
 export function createRetroTvViewer(
   canvas: HTMLCanvasElement,
   onStatus: (state: TvStatus) => void,
@@ -87,6 +92,8 @@ export function createRetroTvViewer(
   }
   const noiseFrame = { value: 0 }
   const noiseImage = { value: 0 }
+  const screenUvMin = new THREE.Vector2()
+  const screenUvSize = new THREE.Vector2(1, 1)
   let noiseTimer: number | null = null
   let visible = false
   const updateNoise = () => {
@@ -259,7 +266,7 @@ export function createRetroTvViewer(
       .addScaledVector(cameraUp, 0.12 * tvUnit)
       .sub(tvCenter)
     controller.position.copy(controllerBase)
-    controller.quaternion.set(0.37714888, 0.03937235, 0.09607612, 0.92031403)
+    controller.quaternion.set(0.37714888, -0.08937235, 0.09607612, 0.92031403)
     controller.scale.setScalar(tvUnit / 6.5)
   }
   new GLTFLoader().load(controllerUrl, (gltf) => {
@@ -357,6 +364,8 @@ export function createRetroTvViewer(
       screen.onBeforeCompile = (shader) => {
         shader.uniforms.noiseFrame = noiseFrame
         shader.uniforms.noiseImage = noiseImage
+        shader.uniforms.screenUvMin = { value: screenUvMin }
+        shader.uniforms.screenUvSize = { value: screenUvSize }
         shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>
           varying vec2 vStaticUv;
         `).replace('#include <uv_vertex>', `#include <uv_vertex>
@@ -365,11 +374,32 @@ export function createRetroTvViewer(
         shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
           uniform float noiseFrame;
           uniform float noiseImage;
+          uniform vec2 screenUvMin;
+          uniform vec2 screenUvSize;
           varying vec2 vStaticUv;
+          const float edgePixels = ${SCREEN_EDGE_PIXELS.toFixed(1)};
+          const float edgeFade = ${SCREEN_EDGE_FADE.toFixed(3)};
+          const float edgeRandomness = ${SCREEN_EDGE_RANDOMNESS.toFixed(2)};
           float staticHash(vec2 cell) {
             return fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
           }
+          float screenMask(vec2 uv, vec2 cell) {
+            vec2 edge = abs(uv - 0.5) - vec2(0.40);
+            float distanceToEdge = length(max(edge, 0.0)) + min(max(edge.x, edge.y), 0.0) - 0.08;
+            float fade = clamp(-distanceToEdge / edgeFade, 0.0, 1.0);
+            float randomValue = mix(0.5, 0.1 + 0.8 * staticHash(cell), edgeRandomness);
+            return clamp((fade - randomValue) * 4.0 + 0.5, 0.0, 1.0);
+          }
         `).replace('#include <opaque_fragment>', `
+          // Randomized pixel opacity falls off toward the edge; the pattern stays still.
+          vec2 screenUv = (vStaticUv - screenUvMin) / screenUvSize;
+          vec2 grid = screenUv * edgePixels - 0.5;
+          vec2 cell = floor(grid);
+          vec2 blend = smoothstep(0.0, 1.0, fract(grid));
+          vec2 uv00 = (cell + 0.5) / edgePixels;
+          float maskBottom = mix(screenMask(uv00, cell), screenMask(uv00 + vec2(1.0, 0.0) / edgePixels, cell + vec2(1.0, 0.0)), blend.x);
+          float maskTop = mix(screenMask(uv00 + vec2(0.0, 1.0) / edgePixels, cell + vec2(0.0, 1.0)), screenMask(uv00 + vec2(1.0) / edgePixels, cell + vec2(1.0)), blend.x);
+          diffuseColor.a *= mix(maskBottom, maskTop, blend.y);
           vec2 grainCell = floor(vStaticUv * 180.0) + noiseFrame * vec2(17.0, 29.0);
           vec3 grain = vec3(staticHash(grainCell), staticHash(grainCell + 31.7), staticHash(grainCell + 73.1));
           vec3 staticColor = vec3(0.12) + grain * 0.55;
@@ -379,6 +409,7 @@ export function createRetroTvViewer(
         `)
       }
       screen.depthTest = false
+      screen.transparent = true
       node.material = screen
       // Flip within the existing UV island, keeping its crop while orienting the artwork.
       const originalGeometry = node.geometry
@@ -391,6 +422,8 @@ export function createRetroTvViewer(
           minX = Math.min(minX, uv.getX(i)); maxX = Math.max(maxX, uv.getX(i))
           minY = Math.min(minY, uv.getY(i)); maxY = Math.max(maxY, uv.getY(i))
         }
+        screenUvMin.set(minX, minY)
+        screenUvSize.set(Math.max(maxX - minX, 1e-6), Math.max(maxY - minY, 1e-6))
         uvCenter.set((minX + maxX) / 2, (minY + maxY) / 2)
         for (let i = 0; i < uv.count; i++) uv.setXY(i, minX + maxX - uv.getX(i), minY + maxY - uv.getY(i))
         uv.needsUpdate = true
