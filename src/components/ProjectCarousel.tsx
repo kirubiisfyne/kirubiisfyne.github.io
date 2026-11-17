@@ -27,6 +27,7 @@ export interface AcceptanceControls extends ViewerAcceptanceHooks, MetadataAccep
 interface ProjectCarouselProps {
   readonly projects: readonly Project[]
   readonly acceptance?: AcceptanceControls
+  readonly beltSpacing?: number
   readonly orbitRadius?: number
 }
 const modelViewerPromise = import('./ModelViewer')
@@ -63,10 +64,12 @@ type Selection = {
   requestId: number
   direction: ViewerSelectionRequest['direction']
   activatedAtMs: number | null
+  serviceStartedAtMs?: number | null
 }
+type NavigationInput = { direction: -1 | 1; activatedAtMs: number }
 type MetadataProof = { readonly ticket: MetadataTicket; readonly node: HTMLElement }
 
-export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCarouselProps) {
+export function ProjectCarousel({ projects, acceptance, beltSpacing, orbitRadius }: ProjectCarouselProps) {
   const [view, setView] = useState<Selection>({ index: 0, requestId: 0, direction: null, activatedAtMs: null })
   const current = useRef(view)
   const phase = useRef<ViewerStatus['state']>('loading')
@@ -84,6 +87,11 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
   const announced = useRef<number | null>(null)
   const terminal = useRef<string | null>(null)
   const failureFrame = useRef<number | null>(null)
+  const queue = useRef<NavigationInput[]>([])
+  const queueFrame = useRef<number | null>(null)
+  const canvasObserver = useRef<IntersectionObserver | null>(null)
+  const canvasVisible = useRef(false)
+  const drainQueue = useRef<() => void>(() => {})
   const project = projects[view.index]
   const canNavigate = projects.length > 1
 
@@ -163,7 +171,9 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
       const selected = current.current
       const target = projects[selected.index]
       if (target && (phase.current === 'error' || phase.current === 'unavailable')) {
-        reveal({ requestId: selected.requestId, modelId: target.id }, false)
+        if (reveal({ requestId: selected.requestId, modelId: target.id }, false) && phase.current === 'error') {
+          drainQueue.current()
+        }
       }
     })
   }, [projects, reveal])
@@ -173,9 +183,13 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
       if (next.requestId !== current.current.requestId || next.requestedId !== projects[current.current.index]?.id)
         return
       phase.current = next.state
-      if (next.state === 'unavailable') terminal.current = next.message
+      if (next.state === 'unavailable') {
+        terminal.current = next.message
+        queue.current = []
+      }
       setStatus(next)
       scheduleFailure()
+      if (next.state === 'ready') drainQueue.current()
     },
     [projects, scheduleFailure]
   )
@@ -248,25 +262,45 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
   )
 
   const onCanvas = useCallback((node: HTMLCanvasElement | null) => {
+    canvasObserver.current?.disconnect()
+    canvasObserver.current = null
+    canvasVisible.current = false
     canvas.current = node
-    node?.setAttribute('aria-label', '3D model loading')
+    if (!node) return
+    node.setAttribute('aria-label', '3D model loading')
+    const observer = new IntersectionObserver(([entry]) => {
+      canvasVisible.current = !!entry?.isIntersecting
+      if (canvasVisible.current) drainQueue.current()
+    })
+    canvasObserver.current = observer
+    observer.observe(node)
   }, [])
   const finalize = useCallback((ticket: MetadataTicket) => reveal(ticket, true), [reveal])
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const resume = () => drainQueue.current()
+    document.addEventListener('visibilitychange', resume)
+    window.addEventListener('focus', resume)
+    return () => {
+      document.removeEventListener('visibilitychange', resume)
+      window.removeEventListener('focus', resume)
+      canvasObserver.current?.disconnect()
+      canvasObserver.current = null
       if (failureFrame.current !== null) cancelAnimationFrame(failureFrame.current)
-    },
-    []
-  )
+      if (queueFrame.current !== null) cancelAnimationFrame(queueFrame.current)
+      failureFrame.current = null
+      queueFrame.current = null
+      queue.current = []
+    }
+  }, [])
 
-  function navigate(direction: -1 | 1, event: MouseEvent<HTMLButtonElement>) {
-    if (!canNavigate || phase.current === 'moving') return
+  function dispatch(input: NavigationInput, waited: boolean) {
     const next: Selection = {
-      index: (current.current.index + direction + projects.length) % projects.length,
+      index: (current.current.index + input.direction + projects.length) % projects.length,
       requestId: current.current.requestId + 1,
-      direction: direction === 1 ? 'next' : 'previous',
-      activatedAtMs: event.timeStamp > 1e12 ? event.timeStamp - performance.timeOrigin : event.timeStamp,
+      direction: input.direction === 1 ? 'next' : 'previous',
+      activatedAtMs: input.activatedAtMs,
+      serviceStartedAtMs: waited ? performance.now() : null,
     }
     const target = projects[next.index]!
     current.current = next
@@ -284,6 +318,35 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
         state: 'loading',
       })
       channel.current?.select({ ...next, model: target })
+    }
+  }
+
+  drainQueue.current = () => {
+    if (queueFrame.current !== null || queue.current.length === 0 || terminal.current) return
+    if (phase.current !== 'ready' && phase.current !== 'error') return
+    if (document.visibilityState === 'hidden' || !document.hasFocus() || !canvasVisible.current) return
+    queueFrame.current = requestAnimationFrame(() => {
+      queueFrame.current = null
+      if (terminal.current || document.visibilityState === 'hidden' || !document.hasFocus() || !canvasVisible.current) return
+      if (phase.current !== 'ready' && phase.current !== 'error') return
+      const input = queue.current.shift()
+      if (input) dispatch(input, true)
+    })
+  }
+
+  function navigate(direction: -1 | 1, event: MouseEvent<HTMLButtonElement>) {
+    if (!canNavigate) return
+    const input = {
+      direction,
+      activatedAtMs: event.timeStamp > 1e12 ? event.timeStamp - performance.timeOrigin : event.timeStamp,
+    }
+    if (terminal.current) {
+      dispatch(input, false)
+    } else if ((phase.current === 'ready' || phase.current === 'error') && queue.current.length === 0 && queueFrame.current === null) {
+      dispatch(input, false)
+    } else {
+      queue.current.push(input)
+      drainQueue.current()
     }
   }
 
@@ -307,7 +370,7 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
               type="button"
               aria-label="Previous project"
               disabled={!canNavigate}
-              aria-disabled={!canNavigate || status.state === 'moving'}
+              aria-disabled={!canNavigate}
               onClick={(event) => navigate(-1, event)}
               className="navigation-button navigation-previous"
               style={navigationArtwork}
@@ -326,6 +389,7 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
                   finalize={finalize}
                   onCanvas={onCanvas}
                   acceptance={acceptance}
+                  beltSpacing={beltSpacing}
                   orbitRadius={orbitRadius}
                 />
               </Suspense>
@@ -334,7 +398,7 @@ export function ProjectCarousel({ projects, acceptance, orbitRadius }: ProjectCa
               type="button"
               aria-label="Next project"
               disabled={!canNavigate}
-              aria-disabled={!canNavigate || status.state === 'moving'}
+              aria-disabled={!canNavigate}
               onClick={(event) => navigate(1, event)}
               className="navigation-button navigation-next"
               style={navigationArtwork}

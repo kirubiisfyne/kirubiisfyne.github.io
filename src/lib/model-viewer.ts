@@ -1,7 +1,9 @@
 import {
+  AmbientLight,
   Box3,
   BufferGeometry,
   Color,
+  DirectionalLight,
   Group,
   InstancedMesh,
   Light,
@@ -15,7 +17,6 @@ import {
   PerspectiveCamera,
   Quaternion,
   Raycaster,
-  RectAreaLight,
   Scene,
   Skeleton,
   Sphere,
@@ -27,9 +28,9 @@ import {
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three'
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js'
 import type { GLTF, GLTFParser } from 'three/addons/loaders/GLTFLoader.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js'
 import type { Project } from '../types/project'
 
 export type DisplayMode = 'clay' | 'rendered' | 'wireframe'
@@ -44,6 +45,7 @@ export interface ViewerSelectionRequest {
   readonly model: Pick<Project, 'id' | 'modelUrl'>
   readonly direction: 'next' | 'previous' | null
   readonly activatedAtMs: number | null
+  readonly serviceStartedAtMs?: number | null
 }
 
 export type ViewerStatus = {
@@ -56,12 +58,18 @@ export interface ModelViewerController {
   select(request: ViewerSelectionRequest): void
   setMetadataReady(ticket: MetadataTicket, ready: boolean): void
   setMode(mode: DisplayMode): void
+  setBeltSpacing?(spacing: number): void
+  getBeltSpacing?(): number
+  /** @deprecated Use setBeltSpacing. */
   setOrbitRadius?(radius: number): void
+  /** @deprecated Use getBeltSpacing. */
   getOrbitRadius?(): number
   dispose(): void
 }
 
 export interface ViewerOptions {
+  readonly beltSpacing?: number
+  /** @deprecated Use beltSpacing. */
   readonly orbitRadius?: number
 }
 export type ViewerChannel = Pick<ModelViewerController, 'select' | 'setMetadataReady'>
@@ -76,16 +84,22 @@ export interface ViewerAcceptanceHooks {
   failCandidateValidation?(modelId: string, mode: DisplayMode): boolean
   onCandidatePreparation?(): void
   onCandidateValidated?(info: { requestId: number; modelId: string }): void
+  onOccurrenceDisposed?(info: { instanceId: string; modelId: string; skeletonIds: string[] }): void
   onPresentationDrawn?(info: {
     requestId: number
     displayedId: string
+    activatedAtMs: number | null
+    serviceStartedAtMs: number | null
     timestamp: number
     position: [number, number, number]
     scale: [number, number, number]
     progress: number | null
     cameraDistance: number
     participants: {
+      instanceId: string
       modelId: string
+      skeletonIds: string[]
+      geometryIds: string[]
       position: [number, number, number]
       scale: [number, number, number]
       pose: [number, number]
@@ -96,17 +110,17 @@ export interface ViewerAcceptanceHooks {
 
 const FULL_TURN = Math.PI * 2
 const KEY_TURN = Math.PI / 36
-const ORBIT_TILT = Math.PI / 8
-// Durations are proportionally shortened when the settlement deadline is near.
-const ANTICIPATION_AMOUNT = 0.15
-const ANTICIPATION_DURATION_MS = 250
+// Duration is shortened when the settlement deadline is near.
 const TRANSITION_DURATION_MS = 700
-const OVERSHOOT_AMOUNT = 0.08
-const OVERSHOOT_SETTLE_DURATION_MS = 250
 const SETTLEMENT_DEADLINE_MS = 1500
+// Fade width as a fraction of the full visible canvas; independent of model motion.
+const EDGE_DITHER_FADE_FRACTION = 0.14
+// Side artworks use 75% of the centered artwork's normalized scale.
+const CENTER_MODEL_SCALE = 2.2
+const SIDE_MODEL_SCALE_RATIO = 0.75
 
 function setOrbitPosition(object: Object3D, x: number, z: number): void {
-  object.position.set(x * Math.cos(ORBIT_TILT), x * Math.sin(ORBIT_TILT), z)
+  object.position.set(x, 0, z)
 }
 
 // Zero velocity and acceleration at each phase boundary soften direction changes.
@@ -115,7 +129,13 @@ function easeInOutSmooth(t: number): number {
 }
 
 const DITHER_DISCARD_CHUNK = `
-  if (uDitherFade < 0.999) {
+  float edgeCoverage = 1.0;
+  if (uEdgeDither.w > 0.5) {
+    float edgeDistance = min(gl_FragCoord.x - uEdgeDither.x, uEdgeDither.y - gl_FragCoord.x);
+    edgeCoverage = smoothstep(0.0, uEdgeDither.z, edgeDistance);
+  }
+  float coverage = uDitherFade * edgeCoverage;
+  if (coverage < 0.999) {
     vec2 ditherCoord = floor(gl_FragCoord.xy / 2.0);
     int bx = int(mod(ditherCoord.x, 8.0));
     int by = int(mod(ditherCoord.y, 8.0));
@@ -129,18 +149,19 @@ const DITHER_DISCARD_CHUNK = `
       15, 47,  7, 39, 13, 45,  5, 37,
       63, 31, 55, 23, 61, 29, 53, 21
     );
-    if (uDitherFade < float(bayer[by * 8 + bx]) / 64.0) discard;
+    if (coverage <= float(bayer[by * 8 + bx]) / 64.0) discard;
   }
 `
 
-function attachDither(material: Material, uniform: { value: number }): void {
-  material.customProgramCacheKey = () => 'portfolio-dither'
+function attachDither(material: Material, uniform: { value: number }, edge: { value: Vector4 }): void {
+  material.customProgramCacheKey = () => 'portfolio-dither-edge-v1'
   const prevOnBeforeCompile = material.onBeforeCompile
   material.onBeforeCompile = (shader, rend) => {
     prevOnBeforeCompile?.(shader, rend)
     shader.uniforms.uDitherFade = uniform
+    shader.uniforms.uEdgeDither = edge
     if (!shader.fragmentShader.includes('uDitherFade')) {
-      shader.fragmentShader = `uniform float uDitherFade;\n${shader.fragmentShader}`
+      shader.fragmentShader = `uniform float uDitherFade;\nuniform vec4 uEdgeDither;\n${shader.fragmentShader}`
       if (shader.fragmentShader.includes('#include <dithering_fragment>')) {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <dithering_fragment>',
@@ -402,7 +423,6 @@ export function createModelViewer(
   const gl = rawGl
   let renderer: WebGLRenderer
   try {
-    RectAreaLightUniformsLib.init()
     renderer = new WebGLRenderer({ canvas, context: gl, alpha: true, antialias: true })
     renderer.outputColorSpace = SRGBColorSpace
     renderer.toneMapping = NeutralToneMapping
@@ -421,16 +441,14 @@ export function createModelViewer(
   const camera = new PerspectiveCamera(baseCameraFov, 1, 0.1, 10)
   const stage = canvas.parentElement
   const pointerSurface = stage ?? canvas
-  const key = new RectAreaLight(0xffffff, 8, 3, 4)
-  key.position.set(3, 3, 4)
-  key.lookAt(0, 0, 0)
-  const fill = new RectAreaLight(0xffffff, 3, 4, 4)
-  fill.position.set(-3, 1, 2)
-  fill.lookAt(0, 0, 0)
-  const rim = new RectAreaLight(0xffffff, 10, 2, 3)
-  rim.position.set(2, 2, -3)
-  rim.lookAt(0, 0, 0)
-  scene.add(key, fill, rim)
+  const ambient = new AmbientLight(0xffffff, 1.2)
+  const key = new DirectionalLight(0xffffff, 1.3)
+  key.position.set(2, 2, 4)
+  const fill = new DirectionalLight(0xffffff, 1.3)
+  fill.position.set(-2, 2, 4)
+  const back = new DirectionalLight(0xffffff, 0.5)
+  back.position.set(0, 1, -4)
+  scene.add(ambient, key, fill, back)
   const bounds = new Box3()
   const sphere = new Sphere()
   const validationTarget = new WebGLRenderTarget(64, 64)
@@ -456,26 +474,16 @@ export function createModelViewer(
   const catalog = new Map<string, LoadContext>()
   type Slot = 'center' | 'left' | 'right'
   const slotTransforms: Record<Slot, { x: number; z: number; scale: number }> = {
-    center: { x: 0, z: 0, scale: 2.2 },
-    left: { x: -1.6, z: -1.2, scale: 0.62 },
-    right: { x: 1.6, z: -1.2, scale: 0.62 },
+    center: { x: 0, z: 0, scale: CENTER_MODEL_SCALE },
+    left: { x: -4.6, z: 0, scale: CENTER_MODEL_SCALE * SIDE_MODEL_SCALE_RATIO },
+    right: { x: 4.6, z: 0, scale: CENTER_MODEL_SCALE * SIDE_MODEL_SCALE_RATIO },
   }
-  let orbitRadius = options?.orbitRadius ?? 1.0
+  let beltSpacing = options?.beltSpacing
+  let orbitRadius = options?.orbitRadius
+  let resolvedBeltSpacing = 1
   const sharedDitherUniform = { value: 1.0 }
-
-  function assignments(center: LoadContext): Map<LoadContext, Slot> {
-    const slots = new Map<LoadContext, Slot>([[center, 'center']])
-    const index = projects.findIndex((project) => project.id === center.modelId)
-    if (index < 0 || projects.length < 2) return slots
-    const right = catalog.get(projects[(index + 1) % projects.length].id)
-    if (right && right !== center) slots.set(right, 'right')
-    if (projects.length > 2) {
-      const left = catalog.get(projects[(index + projects.length - 1) % projects.length].id)
-      if (left && left !== center && left !== right) slots.set(left, 'left')
-    }
-    return slots
-  }
-
+  // Left/right fade bounds and width are in physical drawing-buffer pixels.
+  const edgeDitherUniform = { value: new Vector4(0, 0, 1, 0) }
   function setSlot(load: LoadContext, slot: Slot): void {
     if (!load.presentation) return
     const transform = slotTransforms[slot]
@@ -488,19 +496,79 @@ export function createModelViewer(
   let moving = false
   let moveStartedAtAnimationMs = 0
   let moveDurationMs = 0
-  let anticipationDurationMs = 0
-  let transitionDurationMs = 0
   let moveDirection = 0
-  type TransitionParticipant = {
-    load: LoadContext
-    from: { x: number; z: number; scale: number }
-    to: { x: number; z: number; scale: number }
-    startSlot: Slot | undefined
-    endSlot: Slot | undefined
-    yaw: number
-    pitch: number
-  }
+  type Occurrence = { load: LoadContext; presentation: Group; rotation: Group; clone: boolean; slot: number }
+  type TransitionParticipant = Occurrence & { yaw: number; pitch: number }
   let participants: TransitionParticipant[] = []
+  let restOccurrences: Occurrence[] = []
+  type OccurrenceCopy = {
+    presentation: Group
+    rotation: Group
+    skeletons: Set<Skeleton>
+    instances: Set<InstancedMesh>
+  }
+  const copies = new Map<LoadContext, OccurrenceCopy[]>()
+
+  function discardCopy(load: LoadContext, copy?: OccurrenceCopy): void {
+    const pool = copies.get(load)
+    if (!pool) return
+    const removed = copy ? [copy] : [...pool]
+    for (const item of removed) {
+      const index = pool.indexOf(item)
+      if (index < 0) continue
+      pool.splice(index, 1)
+      item.presentation.removeFromParent()
+      for (const skeleton of item.skeletons) skeleton.dispose()
+      for (const instance of item.instances) instance.dispose()
+      if (import.meta.env.MODE === 'acceptance') {
+        acceptance?.onOccurrenceDisposed?.({
+          instanceId: item.presentation.uuid,
+          modelId: load.modelId,
+          skeletonIds: Array.from(item.skeletons, (skeleton) => skeleton.uuid),
+        })
+      }
+    }
+    if (pool.length === 0) copies.delete(load)
+  }
+
+  function occurrence(load: LoadContext, slot: number, duplicateIndex: number): Occurrence | null {
+    if (!load.presentation || !load.rotation || !alive(load)) return null
+    if (duplicateIndex === 0) return { load, presentation: load.presentation, rotation: load.rotation, clone: false, slot }
+    let pool = copies.get(load)
+    if (!pool) {
+      pool = []
+      copies.set(load, pool)
+    }
+    let copy = pool[duplicateIndex - 1]
+    if (!copy) {
+      const presentation = cloneSkeleton(load.presentation) as Group
+      const rotation = presentation.children[0] as Group
+      const skeletons = new Set<Skeleton>()
+      const instances = new Set<InstancedMesh>()
+      presentation.traverse((object) => {
+        const skeleton = (object as Object3D & { skeleton?: Skeleton }).skeleton
+        if (skeleton) skeletons.add(skeleton)
+        if (object instanceof InstancedMesh) instances.add(object)
+      })
+      copy = { presentation, rotation, skeletons, instances }
+      pool.push(copy)
+      scene.add(presentation)
+    }
+    copy.rotation.quaternion.identity()
+    return { load, presentation: copy.presentation, rotation: copy.rotation, clone: true, slot }
+  }
+
+  function hideOccurrences(): void {
+    for (const load of catalog.values()) if (load.presentation) load.presentation.visible = false
+    for (const pool of copies.values()) for (const copy of pool) copy.presentation.visible = false
+  }
+
+  function pruneCopies(used: Occurrence[]): void {
+    const keep = new Set(used.filter((item) => item.clone).map((item) => item.presentation))
+    for (const [load, pool] of copies) {
+      for (const copy of [...pool]) if (!keep.has(copy.presentation)) discardCopy(load, copy)
+    }
+  }
   let width = 0
   let height = 0
   let measureDirty = true
@@ -616,6 +684,7 @@ export function createModelViewer(
     load.retired = true
     load.abort.abort()
     load.manager.abort()
+    discardCopy(load)
     load.presentation?.removeFromParent()
     load.presentation = null
     load.rotation = null
@@ -655,13 +724,13 @@ export function createModelViewer(
     else if (mode === 'clay') {
       if (!clay) {
         clay = new MeshStandardMaterial({ color: 0xbcbcbc, roughness: 0.85, metalness: 0 })
-        attachDither(clay, sharedDitherUniform)
+        attachDither(clay, sharedDitherUniform, edgeDitherUniform)
       }
       scene.overrideMaterial = clay
     } else {
       if (!wireframe) {
         wireframe = new MeshBasicMaterial({ color: 0xebebeb, wireframe: true })
-        attachDither(wireframe, sharedDitherUniform)
+        attachDither(wireframe, sharedDitherUniform, edgeDitherUniform)
       }
       scene.overrideMaterial = wireframe
     }
@@ -686,42 +755,35 @@ export function createModelViewer(
     width = rect.width
     height = rect.height
     if (!(width > 0 && height > 0)) return false
-    const cssVar =
-      getComputedStyle(canvas).getPropertyValue('--orbit-radius') ||
-      getComputedStyle(canvas).getPropertyValue('--carousel-orbit-radius')
-    const parsedCss = parseFloat(cssVar)
-    const rawOrbit = Number.isFinite(parsedCss) && parsedCss > 0 ? parsedCss : orbitRadius
+    const css = getComputedStyle(canvas)
+    const values = [beltSpacing, parseFloat(css.getPropertyValue('--carousel-belt-spacing')), orbitRadius,
+      parseFloat(css.getPropertyValue('--orbit-radius')), parseFloat(css.getPropertyValue('--carousel-orbit-radius'))]
+    const rawOrbit = values.find((value): value is number => value !== undefined && Number.isFinite(value) && value > 0) ?? 1
+    resolvedBeltSpacing = rawOrbit
     // On narrow screens (mobile), scale the effective orbit with available width
     // so previews never collide with navigation buttons even with a large orbit setting.
     const maxOrbitForWidth = 1.0 + 1.5 * Math.max(0, Math.min(1, (stageRect.width - 375) / 500))
     const effectiveOrbit = Math.min(rawOrbit, maxOrbitForWidth)
-    const baseSideOffset = 0.9 + 0.7 * Math.max(0, Math.min(1, (stageRect.width - 335) / 400))
-    const sideOffset = baseSideOffset * effectiveOrbit
-    const depth = 1.2 * effectiveOrbit
-    const rearDepth = 2.4 * effectiveOrbit
+    const responsiveSpacing = 2.5 + 0.5 * Math.max(0, Math.min(1, (stageRect.width - 375) / 500))
+    const sideOffset = responsiveSpacing * effectiveOrbit
     slotTransforms.left.x = -sideOffset
-    slotTransforms.left.z = -depth
     slotTransforms.right.x = sideOffset
-    slotTransforms.right.z = -depth
-    for (const part of participants) {
-      part.from.x = part.startSlot ? slotTransforms[part.startSlot].x : moveDirection * sideOffset
-      part.from.z = part.startSlot ? slotTransforms[part.startSlot].z : -rearDepth
-      part.to.x = part.endSlot ? slotTransforms[part.endSlot].x : -moveDirection * sideOffset
-      part.to.z = part.endSlot ? slotTransforms[part.endSlot].z : -rearDepth
-    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.setSize(width, height, false)
     camera.aspect = width / height
     const verticalHalfFov = (baseCameraFov * Math.PI) / 360
     const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect)
-    const distance = Math.max(
-      1 + (1.6 * effectiveOrbit) / (Math.tan(horizontalHalfFov) * 0.9),
-      1 + (1.0 * effectiveOrbit) / (Math.tan(verticalHalfFov) * 0.9)
+    const minimumFraming = 1 + 0.4 * Math.max(0, Math.min(1, (stageRect.width - 375) / 500))
+    const framing = Math.max(effectiveOrbit, minimumFraming)
+    const desktopFit = 1 + 0.18 * Math.max(0, Math.min(1, (stageRect.width - 600) / 400))
+    const distance = desktopFit * Math.max(
+      1 + (1.6 * framing) / (Math.tan(horizontalHalfFov) * 0.9),
+      1 + (1.0 * framing) / (Math.tan(verticalHalfFov) * 0.9)
     )
     camera.fov = (2 * Math.atan(Math.tan(verticalHalfFov) * height / stageRect.height) * 180) / Math.PI
     camera.position.set(0, 0, distance)
     camera.near = Math.max(0.01, distance - 2.2)
-    camera.far = distance + rearDepth + 1.2
+    camera.far = distance + 5.0
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
     return true
@@ -763,13 +825,15 @@ export function createModelViewer(
     const clearAlpha = renderer.getClearAlpha()
     const autoClear = renderer.autoClear
     const override = scene.overrideMaterial
-    const states = Array.from(catalog.values(), (entry) => ({
-      entry,
-      visible: entry.presentation?.visible ?? false,
-    }))
+    const states = [
+      ...Array.from(catalog.values()).flatMap((entry) => entry.presentation ? [entry.presentation] : []),
+      ...Array.from(copies.values()).flatMap((pool) => pool.map((copy) => copy.presentation)),
+    ].map((presentation) => ({ presentation, visible: presentation.visible }))
     const position = load.presentation.position.clone()
     const scale = load.presentation.scale.clone()
     const savedFade = load.ditherUniform.value
+    const savedEdgeEnabled = edgeDitherUniform.value.w
+    edgeDitherUniform.value.w = 0
     load.ditherUniform.value = 1.0
     sharedDitherUniform.value = 1.0
     try {
@@ -784,7 +848,7 @@ export function createModelViewer(
       ) {
         throw new Error('Candidate validation failed.')
       }
-      for (const { entry } of states) if (entry.presentation) entry.presentation.visible = entry === load
+      for (const { presentation } of states) presentation.visible = presentation === load.presentation
       setSlot(load, 'center')
       renderer.setRenderTarget(validationTarget)
       renderer.setViewport(0, 0, 64, 64)
@@ -803,7 +867,8 @@ export function createModelViewer(
       load.presentation.position.copy(position)
       load.presentation.scale.copy(scale)
       load.ditherUniform.value = savedFade
-      for (const { entry, visible } of states) if (entry.presentation) entry.presentation.visible = visible
+      edgeDitherUniform.value.w = savedEdgeEnabled
+      for (const { presentation, visible } of states) presentation.visible = visible
       scene.overrideMaterial = override
       renderer.setRenderTarget(target)
       renderer.setViewport(savedViewport)
@@ -814,28 +879,90 @@ export function createModelViewer(
     }
   }
 
+  function loadAt(center: LoadContext, slot: number): LoadContext | undefined {
+    const index = projects.findIndex((project) => project.id === center.modelId)
+    if (index < 0 || projects.length === 0) return undefined
+    const target = projects[(index + slot % projects.length + projects.length) % projects.length]
+    return target ? catalog.get(target.id) : undefined
+  }
+
+  function buildOccurrences(center: LoadContext, slots: number[], destination?: LoadContext): Occurrence[] {
+    const used = new Map<LoadContext, number>()
+    const result: Occurrence[] = []
+    for (const slot of slots) {
+      const load = loadAt(center, slot)
+      if (!load?.presentation || !alive(load)) continue
+      if (load !== center && load !== destination && !validate(load, true)) continue
+      const count = used.get(load) ?? 0
+      const item = occurrence(load, slot, count)
+      if (!item) continue
+      used.set(load, count + 1)
+      result.push(item)
+    }
+    return result
+  }
+
+  function setBeltTransform(presentation: Group, position: number): void {
+    const sideWeight = Math.min(1, Math.abs(position))
+    const scale = 1 - (1 - SIDE_MODEL_SCALE_RATIO) * sideWeight
+    presentation.position.set(position * slotTransforms.right.x, 0, 0)
+    presentation.scale.setScalar(slotTransforms.center.scale * scale)
+  }
+
   function restStage(center: LoadContext): void {
-    const slots = assignments(center)
-    for (const load of catalog.values()) {
-      load.ditherTarget = 1.0
-      const presentation = load.presentation
-      if (!presentation) continue
-      const slot = slots.get(load)
-      presentation.visible = !!slot && alive(load) && (load === center || validate(load, true))
-      if (!presentation.visible || !slot) continue
-      setSlot(load, slot)
-      if (load !== center) {
-        load.yaw = 0
-        load.pitch = 0
-        applyRotation(load)
+    for (const load of catalog.values()) load.ditherTarget = 1.0
+    const slots = projects.length > 1 ? [0, -1, 1] : [0]
+    const next = buildOccurrences(center, slots)
+    hideOccurrences()
+    for (const item of next) {
+      item.presentation.visible = true
+      setBeltTransform(item.presentation, item.slot)
+      if (item.slot !== 0) {
+        if (item.clone) item.rotation.quaternion.identity()
+        else {
+          item.load.yaw = 0
+          item.load.pitch = 0
+          applyRotation(item.load)
+        }
       }
+    }
+    restOccurrences = next
+    pruneCopies(next)
+  }
+
+  function drawBelt(): void {
+    const previousScissor = renderer.getScissor(new Vector4())
+    const previousScissorTest = renderer.getScissorTest()
+    const spacing = slotTransforms.right.x
+    // Keep the entering occurrence outside the aperture until its fragments
+    // reach the gradual edge fade.
+    const aperture = Math.max(spacing, 2 * spacing - CENTER_MODEL_SCALE / 2)
+    const edge = new Vector3(aperture, 0, 0).project(camera).x
+    const left = Math.max(0, Math.floor((1 - edge) * width / 2))
+    const right = Math.min(width, Math.ceil((1 + edge) * width / 2))
+    const physicalScale = gl.drawingBufferWidth / width
+    const fadeWidth = Math.max(1, Math.min(width * EDGE_DITHER_FADE_FRACTION, (right - left) / 2))
+    edgeDitherUniform.value.set(left * physicalScale, right * physicalScale, fadeWidth * physicalScale, 1)
+    try {
+      renderer.setScissorTest(false)
+      renderer.clear()
+      renderer.setScissor(left, 0, Math.max(0, right - left), height)
+      renderer.setScissorTest(true)
+      render()
+      if (gl.isContextLost() || gl.getError() !== gl.NO_ERROR) {
+        throw new Error('The model could not be drawn by this graphics device.')
+      }
+    } finally {
+      renderer.setScissor(previousScissor)
+      renderer.setScissorTest(previousScissorTest)
+      edgeDitherUniform.value.w = 1
     }
   }
 
   function drawStage(center: LoadContext, progress: number | null, report = true): void {
     sharedDitherUniform.value = center.ditherUniform.value
     try {
-      render(true)
+      drawBelt()
     } catch (error) {
       if (gl.isContextLost()) throw error
       // A combined draw cannot identify the failing object. Revalidate each
@@ -847,11 +974,12 @@ export function createModelViewer(
         if (!validate(load, load !== center)) {
           if (load === center) throw error
           load.presentation.visible = false
+          for (const copy of copies.get(load) ?? []) copy.presentation.visible = false
           removed = true
         }
       }
       if (!removed) throw error
-      render(true)
+      drawBelt()
     }
     if (report) reportStage(center, progress)
   }
@@ -859,139 +987,70 @@ export function createModelViewer(
   function reportStage(center: LoadContext, progress: number | null): void {
     if (import.meta.env.MODE === 'acceptance' && acceptance?.onPresentationDrawn && center.presentation && selection) {
       const p = center.presentation
+      const visible = moving && progress !== null ? participants : restOccurrences
       acceptance.onPresentationDrawn({
         requestId: selection.request.requestId,
         displayedId: center.modelId,
+        activatedAtMs: selection.request.activatedAtMs,
+        serviceStartedAtMs: selection.request.serviceStartedAtMs ?? null,
         timestamp: performance.now(),
         position: [p.position.x, p.position.y, p.position.z],
         scale: [p.scale.x, p.scale.y, p.scale.z],
         phase,
         progress,
         cameraDistance: camera.position.z,
-        participants: Array.from(catalog.values())
-          .filter((load) => load.presentation?.visible)
-          .map((load) => {
-            const object = load.presentation!
-            return {
-              modelId: load.modelId,
-              position: [object.position.x, object.position.y, object.position.z] as [number, number, number],
-              scale: [object.scale.x, object.scale.y, object.scale.z] as [number, number, number],
-              pose: [load.yaw, load.pitch] as [number, number],
-            }
-          }),
+        participants: visible.filter((item) => item.presentation.visible).map((item) => {
+          const skeletonIds = new Set<string>()
+          const geometryIds = new Set<string>()
+          item.presentation.traverse((object) => {
+            const mesh = object as Object3D & { skeleton?: Skeleton; geometry?: BufferGeometry }
+            if (mesh.skeleton) skeletonIds.add(mesh.skeleton.uuid)
+            if (mesh.geometry) geometryIds.add(mesh.geometry.uuid)
+          })
+          return {
+            instanceId: item.presentation.uuid,
+            modelId: item.load.modelId,
+            skeletonIds: [...skeletonIds],
+            geometryIds: [...geometryIds],
+            position: [item.presentation.position.x, item.presentation.position.y, item.presentation.position.z] as [number, number, number],
+            scale: [item.presentation.scale.x, item.presentation.scale.y, item.presentation.scale.z] as [number, number, number],
+            pose: (item.clone ? [0, 0] : [item.load.yaw, item.load.pitch]) as [number, number],
+          }
+        }),
       })
     }
   }
 
   function snapshotMovement(fromCenter: LoadContext, toCenter: LoadContext): void {
-    const start = assignments(fromCenter)
-    const end = assignments(toCenter)
-    const entries = new Set([...start.keys(), ...end.keys()])
-    participants = []
-    const sideOffset = slotTransforms.right.x
-    const rearDepth = Math.abs(slotTransforms.right.z) * 2
-    for (const load of entries) {
-      if (!load.presentation || !alive(load) || (load !== toCenter && load !== fromCenter && !validate(load, true)))
-        continue
-      const startSlot = start.get(load)
-      const endSlot = end.get(load)
-      const from = startSlot ? slotTransforms[startSlot] : { x: moveDirection * sideOffset, z: -rearDepth, scale: 0.62 }
-      const to = endSlot ? slotTransforms[endSlot] : { x: -moveDirection * sideOffset, z: -rearDepth, scale: 0.62 }
-      participants.push({
-        load,
-        from: { ...from },
-        to: { ...to },
-        startSlot,
-        endSlot,
-        yaw: load.yaw,
-        pitch: load.pitch,
-      })
-    }
+    const slots = [0, moveDirection, -moveDirection, 2 * moveDirection]
+    participants = buildOccurrences(fromCenter, slots, toCenter).map((item) => ({
+      ...item,
+      yaw: item.clone ? 0 : item.load.yaw,
+      pitch: item.clone ? 0 : item.load.pitch,
+    }))
+    pruneCopies(participants)
   }
 
   function moveStage(progress: number): void {
-    const e = progress
-    for (const load of catalog.values()) if (load.presentation) load.presentation.visible = false
-    const sideX = slotTransforms.right.x
-    const depthZ = Math.abs(slotTransforms.right.z)
-    const rearZ = depthZ * 2
-
+    const e = Math.max(0, Math.min(1, progress))
+    hideOccurrences()
     for (const part of participants) {
-      const { load, from, to } = part
-      const presentation = load.presentation
-      if (!presentation || !alive(load) || (load !== candidate && !validate(load, true))) continue
-
-      let x = from.x + (to.x - from.x) * e
-      let z = from.z + (to.z - from.z) * e
-      const boundedProgress = Math.max(0, Math.min(1, e))
-
-      if (
-        projects.length === 2 &&
-        ((moveDirection === 1 && load === displayed) || (moveDirection === -1 && load === candidate))
-      ) {
-        if (moveDirection === 1) {
-          const theta = ((3 * Math.PI) / 2) * e
-          x = -sideX * Math.sin(theta)
-          z = -(rearZ / 2) * (1 - Math.cos(theta))
-        } else {
-          const phi = ((3 * Math.PI) / 2) * (1 - e)
-          x = -sideX * Math.sin(phi)
-          z = -(rearZ / 2) * (1 - Math.cos(phi))
-        }
-      } else if (
-        projects.length === 2 &&
-        ((moveDirection === 1 && load === candidate) || (moveDirection === -1 && load === displayed))
-      ) {
-        if (moveDirection === 1) {
-          const theta = (Math.PI / 2) * (1 - e)
-          x = sideX * Math.sin(theta)
-          z = -depthZ * (1 - Math.cos(theta))
-        } else {
-          const theta = (Math.PI / 2) * e
-          x = sideX * Math.sin(theta)
-          z = -depthZ * (1 - Math.cos(theta))
-        }
-      } else if (
-        projects.length === 3 &&
-        part.startSlot &&
-        part.endSlot &&
-        part.startSlot !== 'center' &&
-        part.endSlot !== 'center'
-      ) {
-        const dir = moveDirection === 1 ? -1 : 1
-        x = dir * sideX * Math.cos(Math.PI * e)
-        z = -depthZ - (rearZ - depthZ) * Math.sin(Math.PI * e)
-      } else if (!part.startSlot || !part.endSlot) {
-        z -= (rearZ - depthZ) * 0.4 * Math.sin(Math.PI * e)
-        if (!part.startSlot && part.endSlot) {
-          load.ditherUniform.value = motionPreference.matches ? 1.0 : boundedProgress
-        } else if (part.startSlot && !part.endSlot) {
-          load.ditherUniform.value = motionPreference.matches ? 0.0 : 1.0 - boundedProgress
-        }
-      } else if (part.startSlot === 'center' || part.endSlot === 'center') {
-        const arcDir = to.x > from.x ? 1 : -1
-        const theta = (Math.PI / 2) * e
-        if (part.startSlot === 'center') {
-          x = arcDir * sideX * Math.sin(theta)
-          z = -depthZ * (1 - Math.cos(theta))
-        } else {
-          x = arcDir * -sideX * Math.sin((Math.PI / 2) * (1 - e))
-          z = -depthZ * (1 - Math.cos((Math.PI / 2) * (1 - e)))
-        }
-      }
-
+      const { load, presentation } = part
+      if (!alive(load) || (load !== candidate && !validate(load, true))) continue
       presentation.visible = true
-      setOrbitPosition(presentation, x, z)
-      presentation.scale.setScalar(from.scale + (to.scale - from.scale) * boundedProgress)
-
-      if (load === displayed) {
-        load.yaw = part.yaw + shortestDelta(part.yaw, 0) * boundedProgress
-        load.pitch = part.pitch + shortestDelta(part.pitch, 0) * boundedProgress
+      const position = part.slot - moveDirection * e
+      setBeltTransform(presentation, position)
+      if (part.slot === 0 && !part.clone) {
+        load.yaw = part.yaw + shortestDelta(part.yaw, 0) * e
+        load.pitch = part.pitch + shortestDelta(part.pitch, 0) * e
+        applyRotation(load)
+      } else if (part.clone) {
+        part.rotation.quaternion.identity()
       } else {
         load.yaw = 0
         load.pitch = 0
+        applyRotation(load)
       }
-      applyRotation(load)
     }
   }
 
@@ -1044,18 +1103,11 @@ export function createModelViewer(
             moveDirection = selection.request.direction === 'next' ? 1 : -1
             // Leave time for the final validated draw, metadata commit and
             // compositor presentation, rather than spending the budget on motion.
-            const requestedDuration = Math.max(0, ANTICIPATION_DURATION_MS) + Math.max(0, TRANSITION_DURATION_MS)
-              + Math.max(0, OVERSHOOT_SETTLE_DURATION_MS)
+            const requestedDuration = Math.max(0, TRANSITION_DURATION_MS)
             const remainingMs = selection.deadlineAtMs !== null
               ? selection.deadlineAtMs - performance.now() - 175
               : requestedDuration
             moveDurationMs = Math.max(0, Math.min(requestedDuration, remainingMs))
-            anticipationDurationMs = requestedDuration > 0
-              ? moveDurationMs * Math.max(0, ANTICIPATION_DURATION_MS) / requestedDuration
-              : 0
-            transitionDurationMs = requestedDuration > 0
-              ? moveDurationMs * Math.max(0, TRANSITION_DURATION_MS) / requestedDuration
-              : 0
             moveStartedAtAnimationMs = animationNow
             candidate.yaw = 0
             candidate.pitch = 0
@@ -1068,20 +1120,7 @@ export function createModelViewer(
           const elapsed = Math.max(0, animationNow - moveStartedAtAnimationMs)
           const progress = moveDurationMs <= 0 ? 1 : Math.min(1, elapsed / moveDurationMs)
           if (progress < 1) {
-            const anticipating = anticipationDurationMs > 0 && elapsed < anticipationDurationMs
-            const transitionEnd = anticipationDurationMs + transitionDurationMs
-            const settling = elapsed >= transitionEnd
-            const settleDuration = moveDurationMs - transitionEnd
-            const amount = Math.max(0, Math.min(1, ANTICIPATION_AMOUNT))
-            const overshoot = Math.max(0, Math.min(1, OVERSHOOT_AMOUNT))
-            const orbitProgress = anticipating
-              ? -amount * easeInOutSmooth(elapsed / anticipationDurationMs)
-              : settling
-                ? 1 + overshoot * (1 - easeInOutSmooth(settleDuration > 0 ? (elapsed - transitionEnd) / settleDuration : 1))
-                : -amount + (1 + amount + overshoot) * easeInOutSmooth(
-                  (elapsed - anticipationDurationMs) / transitionDurationMs,
-                )
-            moveStage(orbitProgress)
+            moveStage(easeInOutSmooth(progress))
             drawStage(candidate, progress)
             invalidate()
             return
@@ -1180,11 +1219,8 @@ export function createModelViewer(
     pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, 1 - ((event.clientY - rect.top) / rect.height) * 2)
     scene.updateMatrixWorld(true)
     raycaster.setFromCamera(pointer, camera)
-    const visible = Array.from(catalog.values()).filter((load) => load.presentation?.visible)
-    const hits = raycaster.intersectObjects(
-      visible.map((load) => load.presentation!),
-      true
-    )
+    const visible = restOccurrences.filter((item) => item.presentation.visible)
+    const hits = raycaster.intersectObjects(visible.map((item) => item.presentation), true)
     if (hits.length) {
       let object: Object3D | null = hits[0].object
       while (object?.parent && object.parent !== scene) object = object.parent
@@ -1353,7 +1389,7 @@ export function createModelViewer(
         if (object instanceof Mesh && object.material) {
           const raw = object.material as Material | Material[]
           const mats = Array.isArray(raw) ? raw : [raw]
-          for (const m of mats) attachDither(m, load.ditherUniform)
+          for (const m of mats) attachDither(m, load.ditherUniform, edgeDitherUniform)
         }
       })
       result.scene.updateMatrixWorld(true)
@@ -1477,7 +1513,8 @@ export function createModelViewer(
       }
       moving = false
       candidate = null
-      selection = { request, deadlineAtMs: request.activatedAtMs === null ? null : request.activatedAtMs + SETTLEMENT_DEADLINE_MS }
+      const deadlineOrigin = request.serviceStartedAtMs ?? request.activatedAtMs
+      selection = { request, deadlineAtMs: deadlineOrigin === null ? null : deadlineOrigin + SETTLEMENT_DEADLINE_MS }
       ticket = { requestId: request.requestId, modelId: request.model.id }
       metadataReady = false
       if (terminalError) {
@@ -1521,6 +1558,16 @@ export function createModelViewer(
       applyMode()
       invalidate()
     },
+    setBeltSpacing(spacing: number) {
+      if (!Number.isFinite(spacing) || spacing <= 0) return
+      beltSpacing = spacing
+      measureDirty = true
+      measure()
+      invalidate()
+    },
+    getBeltSpacing() {
+      return resolvedBeltSpacing
+    },
     setOrbitRadius(radius: number) {
       if (!Number.isFinite(radius) || radius <= 0) return
       orbitRadius = radius
@@ -1529,7 +1576,7 @@ export function createModelViewer(
       invalidate()
     },
     getOrbitRadius() {
-      return orbitRadius
+      return resolvedBeltSpacing
     },
     dispose() {
       if (disposed) return

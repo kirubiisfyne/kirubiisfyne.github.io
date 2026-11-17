@@ -21,6 +21,7 @@ interface ModelViewerProps {
   readonly finalize: (ticket: MetadataTicket) => boolean
   readonly onCanvas: (canvas: HTMLCanvasElement | null) => void
   readonly acceptance?: ViewerAcceptanceHooks
+  readonly beltSpacing?: number
   readonly orbitRadius?: number
 }
 
@@ -34,9 +35,11 @@ export default function ModelViewer({
   finalize,
   onCanvas,
   acceptance,
+  beltSpacing,
   orbitRadius,
 }: ModelViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const initialOptions = useRef({ beltSpacing, orbitRadius })
   const controllerRef = useRef<ModelViewerController | null>(null)
   const instructionsId = useId()
   const [mode, setMode] = useState<DisplayMode>('rendered')
@@ -65,7 +68,7 @@ export default function ModelViewer({
           finalize: (ticket) => active && finalize(ticket),
         },
         acceptance,
-        { orbitRadius }
+        initialOptions.current
       )
       controllerRef.current = controller
       unregister = register(controller)
@@ -78,16 +81,15 @@ export default function ModelViewer({
       controllerRef.current = null
       controller?.dispose()
     }
-  }, [projects, finalize, onStatus, onUnavailable, register, acceptance, orbitRadius])
+  }, [projects, finalize, onStatus, onUnavailable, register, acceptance])
 
   useEffect(() => {
     controllerRef.current?.setMode(mode)
   }, [mode])
   useEffect(() => {
-    if (orbitRadius !== undefined && controllerRef.current?.setOrbitRadius) {
-      controllerRef.current.setOrbitRadius(orbitRadius)
-    }
-  }, [orbitRadius])
+    if (beltSpacing !== undefined) controllerRef.current?.setBeltSpacing?.(beltSpacing)
+    else if (orbitRadius !== undefined) controllerRef.current?.setOrbitRadius?.(orbitRadius)
+  }, [beltSpacing, orbitRadius])
 
   const ready = status.state === 'ready'
   const loading = status.state === 'loading' || status.state === 'moving'
