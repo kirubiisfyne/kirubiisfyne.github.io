@@ -505,7 +505,7 @@ test.describe('Acceptance Settlement Suite', () => {
       expect(positionMutations.length, 'Exactly one success position update for Beta').toBe(1);
     });
 
-    test('superseded gate: releasing obsolete destination never reveals or updates position', async ({ page }) => {
+    test('queued destinations settle in order when metadata gates release', async ({ page }) => {
       await waitForInitialReady(page);
 
       // Hold Beta
@@ -522,17 +522,15 @@ test.describe('Acceptance Settlement Suite', () => {
       await page.locator('button[aria-label="Next project"]').click();
       await page.waitForTimeout(50);
 
-      // Release obsolete Beta FIRST
+      // Beta settles before the queued Gamma request is allowed to reveal.
       await page.evaluate(() => {
         window.__testGateB?.release();
       });
-      await page.waitForTimeout(100);
-
-      // Beta must never settle or reveal
-      const titleText = await page.locator('.project-title').textContent();
-      expect(titleText).not.toContain('Fixture Model Beta');
-      const posText = await page.locator('.carousel-position').textContent();
-      expect(posText).not.toContain('Fixture Model Beta');
+      await expect(page.locator('.carousel-position')).toHaveText('2 of 3: Fixture Model Beta');
+      await expect.poll(async () => page.evaluate(() => window.__ACCEPTANCE__!.candidateValidations.some(item => item.requestId === 2 && item.modelId === 'fixture-c'))).toBe(true);
+      await expect(page.locator('.project-title')).toHaveAttribute('aria-hidden', 'true');
+      const betaUpdates = await page.evaluate(() => window.__ACCEPTANCE__!.observedMutations.filter(m => m.type === 'position' && m.value.includes('Fixture Model Beta')));
+      expect(betaUpdates).toHaveLength(1);
 
       // Release Gamma
       await page.evaluate(() => {

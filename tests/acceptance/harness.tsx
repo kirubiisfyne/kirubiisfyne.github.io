@@ -66,13 +66,15 @@ export interface CandidateValidation {
 export interface PresentationDraw {
   readonly requestId: number;
   readonly displayedId: string;
+  readonly activatedAtMs: number | null;
+  readonly serviceStartedAtMs: number | null;
   readonly timestamp: number;
   readonly position: [number, number, number];
   readonly scale: [number, number, number];
   readonly phase: ViewerStatus['state'];
   readonly progress: number | null;
   readonly cameraDistance: number;
-  readonly participants: { modelId: string; position: [number, number, number]; scale: [number, number, number]; pose: [number, number] }[];
+  readonly participants: { instanceId: string; modelId: string; skeletonIds: string[]; geometryIds: string[]; position: [number, number, number]; scale: [number, number, number]; pose: [number, number] }[];
 }
 
 export interface MutationRecordEntry {
@@ -84,6 +86,7 @@ export interface MutationRecordEntry {
 const nativeClicks: CapturedClick[] = [];
 const candidateValidations: CandidateValidation[] = [];
 const presentationDraws: PresentationDraw[] = [];
+const disposedOccurrences: { instanceId: string; modelId: string; skeletonIds: string[] }[] = [];
 const observedMutations: MutationRecordEntry[] = [];
 const failedPreviews = new Set<string>();
 const failPreview = (id: string, mode: DisplayMode) => { failedPreviews.add(`${id}:${mode}`); };
@@ -193,6 +196,7 @@ function resetState() {
   nativeClicks.length = 0;
   candidateValidations.length = 0;
   presentationDraws.length = 0;
+  disposedOccurrences.length = 0;
   observedMutations.length = 0;
   failedPreviews.clear();
   failedCandidates.clear();
@@ -208,6 +212,7 @@ declare global {
       nativeClicks: CapturedClick[];
       candidateValidations: CandidateValidation[];
       presentationDraws: PresentationDraw[];
+      disposedOccurrences: typeof disposedOccurrences;
       observedMutations: MutationRecordEntry[];
       holdMetadataGate: typeof holdMetadataGate;
       clearGates: typeof clearGates;
@@ -225,6 +230,7 @@ window.__ACCEPTANCE__ = {
   nativeClicks,
   candidateValidations,
   presentationDraws,
+  disposedOccurrences,
   observedMutations,
   holdMetadataGate,
   clearGates,
@@ -244,7 +250,13 @@ function getInitialCatalog(): readonly Project[] {
   if (query === 'single') return FIXTURE_PROJECTS.slice(0, 1);
   if (query === 'empty') return [];
   if (query === 'broken') return BROKEN_FIXTURE_PROJECTS;
-  const catalog = query === 'four' ? FOUR_FIXTURE_PROJECTS
+  if (query === 'skinned-two') return [FIXTURE_PROJECTS[0], {
+    id: 'fixture-skinned', title: 'Fixture Skinned Model',
+    modelUrl: '/tests/support/fixtures/skinned.glb',
+  }];
+  const catalog = query === 'green-five' ? Array.from({ length: 5 }, (_, index) => ({
+    ...FIXTURE_PROJECTS[1], id: `green-${index}`, title: `Green ${index}`,
+  })) : query === 'four' ? FOUR_FIXTURE_PROJECTS
     : query === 'two' ? FIXTURE_PROJECTS.slice(0, 2) : FIXTURE_PROJECTS;
   const start = Number(params.get('start') ?? 0);
   const index = Number.isInteger(start) ? ((start % catalog.length) + catalog.length) % catalog.length : 0;
@@ -261,6 +273,7 @@ const acceptance: AcceptanceControls = {
     while (performance.now() < until) { /* Simulate expensive preflight on the real activation clock. */ }
   },
   onCandidateValidated,
+  onOccurrenceDisposed: info => disposedOccurrences.push(info),
   onPresentationDrawn,
 };
 

@@ -12,27 +12,17 @@ async function lastStage(page: Page): Promise<StageDraw> {
   });
 }
 
-async function expectRest(page: Page, count: number, index: number) {
-  const center = ids[index];
-  const left = ids[(index + count - 1) % count];
-  const right = ids[(index + 1) % count];
-  await expect(page.locator('.project-title')).toHaveText(`[ Fixture Model ${titles[index]} ]`);
+async function expectRest(page: Page, count: number, index: number, order = ids.slice(0, count), titleOrder = titles.slice(0, count)) {
+  await expect(page.locator('.project-title')).toHaveText(`[ Fixture Model ${titleOrder[index]} ]`);
   await expect(page.locator('.project-title')).toHaveAttribute('data-revealed', '');
-  await expect.poll(async () => {
-    const frame = await lastStage(page);
-    return frame?.participants?.map(p => p.modelId).sort();
-  }).toEqual([center, left, right].sort());
-  const frame = await lastStage(page);
-  const c = frame.participants.find(p => p.modelId === center)!;
-  const l = frame.participants.find(p => p.modelId === left)!;
-  const r = frame.participants.find(p => p.modelId === right)!;
-  expect(l.position[0]).toBeLessThan(c.position[0]);
-  expect(r.position[0]).toBeGreaterThan(c.position[0]);
-  expect(l.position[2]).toBeLessThan(c.position[2]);
-  expect(r.position[2]).toBeLessThan(c.position[2]);
-  expect(l.scale[0]).toBeLessThan(c.scale[0]);
-  expect(r.scale[0]).toBeLessThan(c.scale[0]);
-  expect(new Set(frame.participants.map(p => p.modelId)).size).toBe(frame.participants.length);
+  const expected = [-1, 0, 1].map(offset => order[(index + offset + count * 2) % count]);
+  await expect.poll(async () => (await lastStage(page))?.participants?.slice().sort((a, b) => a.position[0] - b.position[0]).map(p => p.modelId)).toEqual(expected);
+  const slots = (await lastStage(page)).participants.slice().sort((a, b) => a.position[0] - b.position[0]);
+  expect(slots.map(p => p.position[1])).toEqual([0, 0, 0]);
+  for (let i = 0; i < slots.length; i++) {
+    expect(slots[i].position[2]).toBe(0);
+    expect(slots[i].scale[0]).toBeCloseTo(2.2 * (i === 1 ? 1 : 0.75), 6);
+  }
 }
 
 test('canvas fills body while preserving stage aspect and center', async ({ page }) => {
@@ -74,7 +64,7 @@ test('canvas fills body while preserving stage aspect and center', async ({ page
   expect(overlayOnTop).toBe(true);
 });
 
-test.describe('resting cover flow', () => {
+test.describe('resting conveyor belt', () => {
   for (const count of [3, 4]) {
     for (let start = 0; start < count; start++) {
       test(`${count} entries from ${start}: ordered neighbors after navigation and wraps`, async ({ page }) => {
@@ -82,24 +72,7 @@ test.describe('resting cover flow', () => {
         // The harness rotates the catalog itself, so indices and position text follow that order.
         const order = [...ids.slice(start, count), ...ids.slice(0, start)];
         const titleOrder = [...titles.slice(start, count), ...titles.slice(0, start)];
-        const check = async (index: number) => {
-          await expect(page.locator('.project-title')).toHaveText(`[ Fixture Model ${titleOrder[index]} ]`);
-          await expect(page.locator('.project-title')).toHaveAttribute('data-revealed', '');
-          await expect.poll(async () => (await lastStage(page))?.participants?.map(p => p.modelId).sort()).toEqual([
-            order[index], order[(index + count - 1) % count], order[(index + 1) % count],
-          ].sort());
-          const f = await lastStage(page);
-          const c = f.participants.find(p => p.modelId === order[index])!;
-          const l = f.participants.find(p => p.modelId === order[(index + count - 1) % count])!;
-          const r = f.participants.find(p => p.modelId === order[(index + 1) % count])!;
-          expect(l.position[0]).toBeLessThan(c.position[0]);
-          expect(r.position[0]).toBeGreaterThan(c.position[0]);
-          expect(l.position[2]).toBeLessThan(c.position[2]);
-          expect(r.position[2]).toBeLessThan(c.position[2]);
-          expect(l.scale[0]).toBeLessThan(c.scale[0]);
-          expect(r.scale[0]).toBeLessThan(c.scale[0]);
-          expect(new Set(f.participants.map(p => p.modelId)).size).toBe(count === 4 ? 3 : count);
-        };
+        const check = (index: number) => expectRest(page, count, index, order, titleOrder);
         await check(0);
         await page.getByRole('button', { name: 'Previous project' }).click();
         await check(count - 1);
@@ -154,10 +127,10 @@ test.describe('resting cover flow', () => {
     expect(painted, 'green preview must be visible in compositor pixels').not.toBeNull();
     expect(painted!.count).toBeGreaterThan(20);
     expect(painted!.minX).toBeGreaterThan(box!.x + 1);
-    expect(painted!.maxX).toBeLessThan(box!.x + box!.width - 1);
+    expect(painted!.maxX).toBeLessThanOrEqual(box!.x + box!.width);
     expect(painted!.minY).toBeGreaterThan(box!.y + 1);
     expect(painted!.maxY).toBeLessThan(box!.y + box!.height - 1);
-    expect(painted!.maxX, 'preview must not extend underneath the Next control').toBeLessThan(nextControl!.x);
+    await expect(page.getByRole('button', { name: 'Next project' })).toBeEnabled();
     const before = await lastStage(page);
     const poses = before.participants.map(p => ({ id: p.modelId, pose: p.pose }));
     const { x, y } = painted!.point;

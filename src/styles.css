@@ -378,7 +378,6 @@
   margin-inline: auto;
   container-type: inline-size;
   --viewer-height: clamp(180px, calc(100cqw * 570.74 / 732), 570.74px);
-  --orbit-radius: 1.4;
   color: white;
   text-align: center;
 }

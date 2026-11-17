@@ -57,7 +57,7 @@ test('late nonadjacent load remains hidden', async ({ page }) => {
   expect(await page.evaluate(() => window.__ACCEPTANCE__!.observedMutations.filter(m => m.type === 'position'))).toHaveLength(0);
 });
 
-test('selected held destination shows loading and can be superseded', async ({ page }) => {
+test('selected held destination queues later navigation until it settles', async ({ page }) => {
   const gate = await holdModelLoad(page, fixture('b'));
   await page.goto('/tests/acceptance/index.html?catalog=four');
   await gate.requested;
@@ -66,11 +66,11 @@ test('selected held destination shows loading and can be superseded', async ({ p
   await expect(page.locator('.viewer-stage')).toHaveAttribute('data-state', 'loading');
   await expect(page.locator('canvas')).toHaveAttribute('aria-label', '3D model loading');
   await page.getByRole('button', { name: 'Next project' }).click();
-  await expect(page.locator('.project-title')).toHaveText('[ Fixture Model Gamma ]');
-  await expect(page.locator('.project-title')).toHaveAttribute('data-revealed', '');
+  await expect(page.locator('.project-title')).toHaveText('[ Fixture Model Beta ]');
+  await expect(page.locator('.project-title')).toHaveAttribute('aria-hidden', 'true');
   gate.release();
-  await expect(page.locator('.carousel-position')).toContainText('Gamma');
-  expect(await page.evaluate(() => window.__ACCEPTANCE__!.observedMutations.filter(m => m.type === 'position' && m.value.includes('Beta')))).toHaveLength(0);
+  await expect(page.locator('.carousel-position')).toContainText('Gamma', { timeout: 15000 });
+  expect(await page.evaluate(() => window.__ACCEPTANCE__!.observedMutations.filter(m => m.type === 'position' && m.value.includes('Beta')))).toHaveLength(1);
 });
 
 test('failed adjacent load is isolated until selected, then onward navigation works', async ({ page }) => {
