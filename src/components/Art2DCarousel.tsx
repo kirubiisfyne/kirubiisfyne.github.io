@@ -26,10 +26,16 @@ const navigationArtwork = {
 export function Art2DCarousel() {
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState<-1 | 0 | 1>(0)
+  const [enlarged, setEnlarged] = useState<(typeof artworks)[number] | null>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
   const queue = useRef<(-1 | 1)[]>([])
   const locked = useRef(false)
   const count = artworks.length
   const current = artworks[index]
+
+  useEffect(() => {
+    if (enlarged && dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal()
+  }, [enlarged])
 
   useEffect(() => {
     if (!direction) return
@@ -71,7 +77,11 @@ export function Art2DCarousel() {
                   <div key={slot} className="art2d-slot" aria-hidden={slot !== 0 || direction !== 0}
                     style={{ '--slot': slot, '--destination': slot - direction, '--center-scale': slot === 0 ? 1 : 0.75, '--destination-scale': slot - direction === 0 ? 1 : 0.75 } as CSSProperties}
                     data-moving={direction !== 0 || undefined}>
-                    <img src={artwork.url} alt={slot === 0 && direction === 0 ? artwork.title : ''} draggable={false} />
+                    {slot === 0 && direction === 0 ? (
+                      <button type="button" className="art2d-enlarge" aria-label={`Enlarge ${artwork.title}`} onClick={() => setEnlarged(artwork)}>
+                        <img src={artwork.url} alt={artwork.title} draggable={false} />
+                      </button>
+                    ) : <img src={artwork.url} alt="" draggable={false} />}
                   </div>
                 )
               })}
@@ -83,6 +93,10 @@ export function Art2DCarousel() {
           <p className="sr-only" aria-live="polite" aria-atomic="true">{current.title}, {index + 1} of {count}</p>
         </figure>
       ) : <p className="project-empty">2D artwork coming soon.</p>}
+      <dialog ref={dialogRef} className="art2d-dialog" aria-label={enlarged ? `Enlarged artwork: ${enlarged.title}` : 'Enlarged artwork'} onClose={() => setEnlarged(null)} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
+        <button type="button" className="art2d-dialog-close" aria-label="Close enlarged artwork" onClick={() => dialogRef.current?.close()}>×</button>
+        {enlarged && <img src={enlarged.url} alt={enlarged.title} />}
+      </dialog>
     </div>
   )
 }
