@@ -3,6 +3,7 @@ import greeting from '../assets/figma/greeting.svg'
 import greetingStrip from '../assets/figma/greeting-strip.svg'
 import projectsArtwork from '../assets/figma/projects-ascii.svg'
 import wordmark from '../assets/figma/wordmark.svg'
+import { Art2DCarousel } from '../components/Art2DCarousel'
 import { ConnectSection } from '../components/ConnectSection'
 import { GameShowcase } from '../components/GameShowcase'
 import { H1 } from '../components/H1'
@@ -11,6 +12,13 @@ import { ProjectCarousel } from '../components/ProjectCarousel'
 import { SkillsSection } from '../components/SkillsSection'
 import { projects } from '../data/projects'
 import { artDescription, introduction } from '../data/site-copy'
+
+const art2dAscii = [
+  '   ___     __           __ ',
+  '  |_  |___/ / ___ _____/ /_',
+  ' / __// _  / / _ `/ __/ __/',
+  '/____/\\_,_/  \\_,_/_/  \\__/',
+].join('\n')
 
 export function PortfolioPage() {
   return (
@@ -28,6 +36,10 @@ export function PortfolioPage() {
       <section aria-labelledby="art" className="flex flex-col gap-[20px]">
         <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={artDescription} />
         <ProjectCarousel projects={projects} />
+      </section>
+      <section aria-labelledby="art-2d" className="flex flex-col gap-[20px]">
+        <H2 id="art-2d" label="[ 2D Art ]" artwork={<div className="game-dev-artwork" aria-hidden="true"><pre>{art2dAscii}</pre></div>} description="A selection of my 2D artwork and graphic design." />
+        <Art2DCarousel />
       </section>
       <GameShowcase />
       <SkillsSection />

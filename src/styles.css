@@ -421,6 +421,44 @@
   width: 100%;
 }
 
+.art2d-stage {
+  position: relative;
+  height: var(--viewer-height);
+  overflow: hidden;
+  mask-image: url('./assets/2d-edge-dither.svg');
+  mask-size: 100% 100%;
+}
+
+.art2d-slot {
+  position: absolute;
+  inset: 6% 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(calc(var(--slot) * 100%)) scale(var(--center-scale));
+}
+
+.art2d-slot[data-moving] {
+  animation: art2d-slide 700ms ease-in-out both;
+}
+
+.art2d-slot img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+@keyframes art2d-slide {
+  from { transform: translateX(calc(var(--slot) * 100%)) scale(var(--center-scale)); }
+  to { transform: translateX(calc(var(--destination) * 100%)) scale(var(--destination-scale)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art2d-slot[data-moving] { animation: none; }
+}
+
 .viewer-stage,
 .viewer-fallback {
   position: relative;
