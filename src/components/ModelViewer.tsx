@@ -110,7 +110,7 @@ export default function ModelViewer({
         <p className="viewer-message" role="status" aria-live="polite" aria-atomic="true">
           {message}
         </p>
-        <p id={instructionsId} className="viewer-instructions">
+        <p id={instructionsId} className="instruction-copy viewer-instructions">
           [ Drag / arrows: inspect ] [ Release / Tab: return ]
         </p>
       </div>

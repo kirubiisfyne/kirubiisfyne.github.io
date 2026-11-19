@@ -27,6 +27,7 @@ export function Art2DCarousel() {
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState<-1 | 0 | 1>(0)
   const [enlarged, setEnlarged] = useState<(typeof artworks)[number] | null>(null)
+  const [closing, setClosing] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const queue = useRef<(-1 | 1)[]>([])
   const locked = useRef(false)
@@ -36,6 +37,23 @@ export function Art2DCarousel() {
   useEffect(() => {
     if (enlarged && dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal()
   }, [enlarged])
+
+  function closeEnlarged() {
+    if (closing) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) dialogRef.current?.close()
+    else setClosing(true)
+  }
+
+  useEffect(() => {
+    if (!enlarged || closing) return
+    const onScroll = () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) dialogRef.current?.close()
+      else setClosing(true)
+    }
+    // Ignore scroll events still settling from bringing the artwork into view.
+    const timer = window.setTimeout(() => window.addEventListener('scroll', onScroll, { passive: true }), 250)
+    return () => { window.clearTimeout(timer); window.removeEventListener('scroll', onScroll) }
+  }, [enlarged, closing])
 
   useEffect(() => {
     if (!direction) return
@@ -77,11 +95,9 @@ export function Art2DCarousel() {
                   <div key={slot} className="art2d-slot" aria-hidden={slot !== 0 || direction !== 0}
                     style={{ '--slot': slot, '--destination': slot - direction, '--center-scale': slot === 0 ? 1 : 0.75, '--destination-scale': slot - direction === 0 ? 1 : 0.75 } as CSSProperties}
                     data-moving={direction !== 0 || undefined}>
-                    {slot === 0 && direction === 0 ? (
-                      <button type="button" className="art2d-enlarge" aria-label={`Enlarge ${artwork.title}`} onClick={() => setEnlarged(artwork)}>
-                        <img src={artwork.url} alt={artwork.title} draggable={false} />
-                      </button>
-                    ) : <img src={artwork.url} alt="" draggable={false} />}
+                    <button type="button" className="art2d-enlarge" disabled={slot !== 0 || direction !== 0} aria-label={`Enlarge ${artwork.title}`} onClick={() => setEnlarged(artwork)}>
+                      <img src={artwork.url} alt={slot === 0 && direction === 0 ? artwork.title : ''} draggable={false} />
+                    </button>
                   </div>
                 )
               })}
@@ -89,13 +105,14 @@ export function Art2DCarousel() {
             <button type="button" aria-label="Previous artwork" disabled={count < 2} onClick={() => navigate(-1)} className="navigation-button navigation-previous" style={navigationArtwork}><span className="navigation-artwork" aria-hidden="true" /></button>
             <button type="button" aria-label="Next artwork" disabled={count < 2} onClick={() => navigate(1)} className="navigation-button navigation-next" style={navigationArtwork}><span className="navigation-artwork" aria-hidden="true" /></button>
           </div>
+          <p className="instruction-copy">[ Click / tap: enlarge ]</p>
           <p className="project-description" hidden={!current.description}>{current.description}</p>
           <p className="sr-only" aria-live="polite" aria-atomic="true">{current.title}, {index + 1} of {count}</p>
         </figure>
       ) : <p className="project-empty">2D artwork coming soon.</p>}
-      <dialog ref={dialogRef} className="art2d-dialog" aria-label={enlarged ? `Enlarged artwork: ${enlarged.title}` : 'Enlarged artwork'} onClose={() => setEnlarged(null)} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
-        <button type="button" className="art2d-dialog-close" aria-label="Close enlarged artwork" onClick={() => dialogRef.current?.close()}>×</button>
-        {enlarged && <img src={enlarged.url} alt={enlarged.title} />}
+      <dialog ref={dialogRef} className="art2d-dialog" data-closing={closing || undefined} aria-label={enlarged ? `Enlarged artwork: ${enlarged.title}` : 'Enlarged artwork'} onClose={() => { setEnlarged(null); setClosing(false) }} onCancel={(event) => { event.preventDefault(); closeEnlarged() }} onClick={(event) => { if (event.target === event.currentTarget) closeEnlarged() }}>
+        <button type="button" className="art2d-dialog-close" aria-label="Close enlarged artwork" onClick={closeEnlarged}><span aria-hidden="true">[ X ]</span></button>
+        {enlarged && <img src={enlarged.url} alt={enlarged.title} onAnimationEnd={() => { if (closing) dialogRef.current?.close() }} />}
       </dialog>
     </div>
   )

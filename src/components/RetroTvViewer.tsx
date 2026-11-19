@@ -80,7 +80,7 @@ export function RetroTvViewer({ image, rotation = 0, navigationEnabled, onNaviga
           <span className="navigation-button navigation-next game-navigation-button" />
         </div>
       </div>
-      <p id={instructionsId} className="game-navigation-instructions">
+      <p id={instructionsId} className="instruction-copy game-navigation-instructions">
         {navigationEnabled ? '[ D-pad / focus + arrows: change game ]' : '[ Game navigation unavailable ]'}
       </p>
       <p className="tv-status" role="status">{status === 'unavailable' ? 'TV image unavailable. You can still browse games below.' : ''}</p>

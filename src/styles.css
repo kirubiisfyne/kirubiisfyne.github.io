@@ -402,6 +402,16 @@
   line-height: 18px;
 }
 
+.instruction-copy {
+  color: #ebebeb80;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.art2d-carousel .instruction-copy + .project-description {
+  margin-top: 8px;
+}
+
 .project-description {
   min-height: 18px;
   font-size: 12px;
@@ -491,6 +501,11 @@
 .art2d-dialog::backdrop {
   background: rgb(0 0 0 / 65%);
   backdrop-filter: blur(10px);
+  animation: art2d-backdrop-in 220ms ease-out both;
+}
+
+.art2d-dialog[data-closing]::backdrop {
+  animation: art2d-backdrop-out 220ms ease-in both;
 }
 
 .art2d-dialog img {
@@ -498,15 +513,44 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  animation: art2d-zoom-in 220ms ease-out both;
+}
+
+.art2d-dialog[data-closing] img {
+  animation: art2d-zoom-out 220ms ease-in both;
 }
 
 .art2d-dialog-close {
   position: fixed;
   top: 12px;
   right: 20px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
   color: white;
-  font: 32px/1 sans-serif;
+  font: 12px/10px var(--font-mono);
+  white-space: pre;
   cursor: pointer;
+}
+
+@keyframes art2d-zoom-in {
+  from { transform: scale(.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes art2d-zoom-out {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(.9); opacity: 0; }
+}
+
+@keyframes art2d-backdrop-in {
+  from { background: rgb(0 0 0 / 0%); backdrop-filter: blur(0); }
+  to { background: rgb(0 0 0 / 65%); backdrop-filter: blur(10px); }
+}
+
+@keyframes art2d-backdrop-out {
+  from { background: rgb(0 0 0 / 65%); backdrop-filter: blur(10px); }
+  to { background: rgb(0 0 0 / 0%); backdrop-filter: blur(0); }
 }
 
 @keyframes art2d-slide {
@@ -515,7 +559,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .art2d-slot[data-moving] { animation: none; }
+  .art2d-slot[data-moving], .art2d-dialog img, .art2d-dialog::backdrop { animation: none; }
 }
 
 .viewer-stage,
@@ -578,9 +622,6 @@
   position: absolute;
   inset-inline: 4px;
   bottom: 2px;
-  font-size: 12px;
-  color: #ebebeb80;
-  line-height: 14px;
   pointer-events: none;
 }
 
