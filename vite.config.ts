@@ -3,7 +3,6 @@ import { join, resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { technicalBreakdownPlugin } from './src/lib/technical-breakdown-plugin';
 
 function discoverModelPaths(root: string): string[] {
   let rootInfo;
@@ -92,7 +91,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    technicalBreakdownPlugin(),
     {
       name: 'refresh-model-configs',
       apply: 'serve',
@@ -106,15 +104,5 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      input: {
-        overview: resolve(import.meta.dirname, 'index.html'),
-        development: resolve(import.meta.dirname, 'development/index.html'),
-        gallery: resolve(import.meta.dirname, 'gallery/index.html'),
-        gameDev: resolve(import.meta.dirname, 'game-dev/index.html'),
-        art3d: resolve(import.meta.dirname, '3d-art/index.html'),
-        graphicDesign: resolve(import.meta.dirname, 'graphic-design/index.html'),
-      },
-    },
   },
 });

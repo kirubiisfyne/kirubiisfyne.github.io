@@ -18,7 +18,7 @@ test('project headings keep Figma highlight and subtitle spacing', async ({ page
     expect(layout.descriptionHeight).toBeGreaterThanOrEqual(48);
   }
 
-  const gameArt = page.locator('.game-showcase .game-dev-artwork pre');
+  const gameArt = page.locator('.game-dev-artwork pre');
   await expect(gameArt).toHaveCSS('line-height', '16px');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });

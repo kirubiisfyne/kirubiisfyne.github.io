@@ -10,13 +10,13 @@ Three full-size sharp models at common depth, with gradual dither at both edges,
 
 ## Pixelation revision
 
-Side pixelation replaces the earlier blur. Inner/outer slots use 4/7 CSS px blocks; block size interpolates with depth while the centered artwork remains sharp. See `reference/evidence/conveyor-pixel-desktop.png` and `reference/evidence/conveyor-pixel-mobile.png`.
+Side pixelation replaces the earlier blur. Inner/outer slots use 4/7 CSS px blocks; block size interpolates with depth while the centered artwork remains sharp. See `evidence/conveyor-pixel-desktop.png` and `evidence/conveyor-pixel-mobile.png`.
 
 ## Five-slot visual revision
 
 The five-slot revision supersedes historical three-slot/common-depth and four-occurrence checks below. Center stays sharp and forward; inner/outer slots use 75%/62% scale and 1.5/3 px blur, interpolated during motion. Five positions fit desktop; mobile may crop outer slots. Two-to-four item catalogs repeat occurrences, single-item catalogs do not. Up to six occurrences render in motion. Equal-depth side layers share an offscreen pass; the center draws directly.
 
-Verified: production build and typecheck; pixel comparison confirms blurred sides and unchanged sharp center on desktop and mobile; edge dither passes at DPR 1 and 2; desktop/mobile five-entry wrapping, short-catalog/skeleton lifecycle, readiness, scale/depth interpolation, modes, inspection, reduced motion, FIFO and metadata gates exercised. Superseded hidden-frame and superseded-gate tests were updated and individually rechecked. Final full suite not rerun. The pre-existing desktop game-controller position assertion still fails (expected <627.2, actual 640.65625); the other seven controller tests pass. Captures: `reference/evidence/conveyor-five-depth-desktop.png`, `reference/evidence/conveyor-five-depth-mobile.png`.
+Verified: production build and typecheck; pixel comparison confirms blurred sides and unchanged sharp center on desktop and mobile; edge dither passes at DPR 1 and 2; desktop/mobile five-entry wrapping, short-catalog/skeleton lifecycle, readiness, scale/depth interpolation, modes, inspection, reduced motion, FIFO and metadata gates exercised. Superseded hidden-frame and superseded-gate tests were updated and individually rechecked. Final full suite not rerun. The pre-existing desktop game-controller position assertion still fails (expected <627.2, actual 640.65625); the other seven controller tests pass. Captures: `evidence/conveyor-five-depth-desktop.png`, `evidence/conveyor-five-depth-mobile.png`.
 
 ## Status
 
@@ -154,9 +154,9 @@ npm run test:acceptance
 - Earlier targeted conveyor checks exercised horizontal monotonic motion, then-equal scale/common depth, two-/three-entry instance identity, no additional load requests during wrap, FIFO ordering/timing, reduced motion, recoverable failure, responsive canvas, inspection, modes and metadata settlement. Equal scale was later superseded by smaller side previews.
 - Latest targeted stage-rest, stage-motion, stage-queue and stage-catalog suite: 50 passed on desktop/mobile. Includes a synthetic acceptance-only skinned fixture that verifies repeated occurrences have separate skeleton identities and shared geometry across all three modes, plus hidden-document queue pause, FIFO timing, reduced motion and recoverable failure.
 - Follow-up desktop/mobile targeted tests: skinned clones retain independent skeletons and shared geometry; recycled and unmounted clone occurrences report one disposal each. Offscreen viewer suspends queued selections until re-entry. All four follow-up cases passed.
-- Browser evidence: `reference/evidence/conveyor-art-desktop.png` and `reference/evidence/conveyor-art-mobile.png` (original belt); `reference/evidence/conveyor-dither-desktop.png` and `reference/evidence/conveyor-dither-mobile.png` show the subsequent even-lighting and edge-dither update, using distinct acceptance fixtures.
+- Browser evidence: `evidence/conveyor-art-desktop.png` and `evidence/conveyor-art-mobile.png` (original belt); `evidence/conveyor-dither-desktop.png` and `evidence/conveyor-dither-mobile.png` show the subsequent even-lighting and edge-dither update, using distinct acceptance fixtures.
 - Edge-dither regression: 70 targeted desktop/mobile tests passed, including pixel sampling at DPR 1 and 2 for both edges and Clay/Rendered modes, mode switching, inspection, loading, and synchronized settlement. Edge-mask preflight is disabled during offscreen candidate validation.
-- Smaller side previews: 34 desktop/mobile rest, motion and edge-dither tests passed; 68 further catalog, queue, readiness and settlement tests passed. Side scale is 75% of center, with monotonic scaling during slides. Evidence: `reference/evidence/conveyor-small-sides-desktop.png` and `reference/evidence/conveyor-small-sides-mobile.png`.
+- Smaller side previews: 34 desktop/mobile rest, motion and edge-dither tests passed; 68 further catalog, queue, readiness and settlement tests passed. Side scale is 75% of center, with monotonic scaling during slides. Evidence: `evidence/conveyor-small-sides-desktop.png` and `evidence/conveyor-small-sides-mobile.png`.
 - Latest production build excludes `fixture-skinned`, `skinned.glb`, `tests/support/fixtures`, `onOccurrenceDisposed` and `onPresentationDrawn` markers. `git diff --check` passes.
 - `npm run lint` reports 23 errors and 2 warnings across the existing project, including formatting in unrelated files; it is not a clean baseline.
 - Remaining: directly exercise instanced-mesh disposal and queued-input unmount cleanup in greater depth. Final full-suite pass remains blocked by the existing game-controller assertion. No supplied assets were modified by this feature.
@@ -170,4 +170,4 @@ npm run test:acceptance
 - Delayed-proof >500 ms evidence and exactly-once announcement records.
 - Resource/Strict Mode/context-loss outcomes and production exclusion checks.
 
-Save actual captures under `reference/evidence/` using feature-specific filenames. No captures or runtime results have been produced by this planning step.
+Save actual captures under `evidence/` using feature-specific filenames. No captures or runtime results have been produced by this planning step.

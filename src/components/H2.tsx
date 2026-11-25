@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
 
 type H2Props = {
-  readonly id?: string
-  readonly label: ReactNode
-  readonly description?: ReactNode
+  readonly id: string
+  readonly label: string
+  readonly description: string
 } & (
-  | { readonly artworkSrc?: string; readonly artwork?: never }
-  | { readonly artwork?: ReactNode; readonly artworkSrc?: never }
+  | { readonly artworkSrc: string; readonly artwork?: never }
+  | { readonly artwork: ReactNode; readonly artworkSrc?: never }
 )
 
 export function H2({ id, label, artworkSrc, artwork, description }: H2Props) {
@@ -18,12 +18,10 @@ export function H2({ id, label, artworkSrc, artwork, description }: H2Props) {
           <img src={artworkSrc} alt="" width={202} height={50} className="absolute -top-[36.5625%] left-0 w-full" />
         </div>
       ) : artwork}
-      <h2 id={id} className="text-[12px] leading-[16px] break-words">
+      <h2 id={id} className="text-[12px] leading-[16px]">
         {label}
       </h2>
-      {description != null && (
-        <p className="flex min-h-[48px] w-full max-w-[1146px] items-center justify-center text-[12px] leading-[16px]">{description}</p>
-      )}
+      <p className="flex min-h-[48px] w-full max-w-[1146px] items-center justify-center text-[12px] leading-[16px]">{description}</p>
     </div>
   )
 }

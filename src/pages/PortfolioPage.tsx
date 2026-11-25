@@ -4,6 +4,7 @@ import greetingStrip from '../assets/figma/greeting-strip.svg'
 import projectsArtwork from '../assets/figma/projects-ascii.svg'
 import wordmark from '../assets/figma/wordmark.svg'
 import { Art2DShowcase } from '../components/Art2DShowcase'
+import { ConnectSection } from '../components/ConnectSection'
 import { GameShowcase } from '../components/GameShowcase'
 import { H1 } from '../components/H1'
 import { H2 } from '../components/H2'
@@ -33,6 +34,7 @@ export function PortfolioPage() {
       <GameShowcase />
       <SkillsSection />
     </main>
+    <ConnectSection />
     </>
   )
 }
