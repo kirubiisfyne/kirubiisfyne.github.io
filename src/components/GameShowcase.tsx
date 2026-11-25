@@ -2,16 +2,10 @@ import { useState, type CSSProperties } from 'react'
 import playArtwork from '../assets/figma/view-play.svg'
 import { games as defaultGames, type Game } from '../data/games'
 import { gameDescription } from '../data/site-copy'
+import { GameDevArtwork } from './GameDevArtwork'
 import { H2 } from './H2'
+import { H3 } from './H3'
 import { RetroTvViewer } from './RetroTvViewer'
-
-const gameDevAscii = [
-  '  _____                 ___          ',
-  ' / ___/__ ___ _  ___   / _ \\___ _  __',
-  "/ (_ / _ `/  ' \\/ -_) / // / -_) |/ /",
-  '\\___/\\_,_/_/_/_/\\__/ /____/\\__/|___/',
-  ' ',
-].join('\n')
 
 export function GameShowcase({ games = defaultGames }: { readonly games?: readonly Game[] }) {
   const [index, setIndex] = useState(0)
@@ -23,10 +17,10 @@ export function GameShowcase({ games = defaultGames }: { readonly games?: readon
         id="game-showcase-heading"
         label="[ Game Dev ]"
         description={gameDescription}
-        artwork={<div className="game-dev-artwork" aria-hidden="true"><pre>{gameDevAscii}</pre></div>}
+        artwork={<GameDevArtwork />}
       />
       <div className="game-carousel">
-        {selected && <h3 className="game-title">{selected.name}</h3>}
+        {selected && <H3 className="game-title" label={selected.name} />}
         <div className="game-carousel-stage">
           <RetroTvViewer
             image={selected?.emissiveUrl ?? null}

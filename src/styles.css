@@ -1,4 +1,5 @@
 @import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
 @import 'tailwindcss';
 
 @theme {
@@ -42,6 +43,175 @@
   }
 }
 
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-paper);
+  color: #000;
+}
+.site-header-inner {
+  max-width: 1280px;
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.site-brand, .site-navigation a {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-navigation { display: flex; align-items: center; gap: 24px; }
+.site-brand, .site-navigation a { padding: 12px 0; }
+.site-brand:hover, .site-navigation a:hover, .site-navigation a[aria-current='page'] {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.site-brand:focus-visible, .site-navigation a:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+}
+html { scroll-padding-top: 72px; }
+.plain-ascii-scroll { width: 100%; overflow-x: auto; }
+.plain-ascii-scroll:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.plain-ascii-scroll pre { width: max-content; margin: 0; font: 12px/16px var(--font-mono); white-space: pre; }
+.development-intro, .development-list { text-align: center; }
+.development-intro .plain-ascii-scroll, .development-list .plain-ascii-scroll { text-align: safe center; }
+.development-intro .plain-ascii-scroll pre, .development-list .plain-ascii-scroll pre {
+  display: inline-block;
+  text-align: left;
+  isolation: isolate;
+  background: linear-gradient(to bottom, transparent calc(50% - 16px), var(--color-paper) calc(50% - 16px), var(--color-paper) calc(50% + 16px), transparent calc(50% + 16px));
+}
+.development-intro .plain-ascii-scroll pre span, .development-list .plain-ascii-scroll pre span { color: white; mix-blend-mode: difference; }
+.development-list .plain-ascii-scroll pre {
+  background: linear-gradient(to bottom, transparent calc(50% - 8px), var(--color-paper) calc(50% - 8px), var(--color-paper) calc(50% + 24px), transparent calc(50% + 24px));
+}
+.development-list .breakdown-ascii { overflow: hidden; }
+.development-list .breakdown-ascii .breakdown-ascii-short { display: none; }
+@media (max-width: 760px) {
+  .development-list .breakdown-ascii .breakdown-ascii-full { display: none; }
+  .development-list .breakdown-ascii .breakdown-ascii-short { display: inline-block; font-size: clamp(7px, 3vw, 12px); }
+}
+.development-intro .plain-ascii-scroll .development-ascii-portrait { display: none; }
+@media (orientation: portrait) {
+  .development-intro .plain-ascii-scroll .development-ascii-landscape { display: none; }
+  .development-intro .plain-ascii-scroll .development-ascii-portrait { display: inline-block; }
+}
+.development-intro h1, .development-list > h2, .gallery-page h1 { margin: 8px 0 0; font-size: 12px; line-height: 16px; }
+.development-description { margin: 20px 0; }
+.development-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 1280px;
+  min-height: 65vh;
+  margin: 0 auto;
+  padding: 20px;
+}
+.development-page h1, .development-page h2, .development-page h3, .development-page h4, .development-page h5, .development-page h6, .game-dev-skills dt { font-weight: 700; }
+.development-eyebrow { font-size: 12px; line-height: 16px; }
+.development-empty { padding: 20px 0; text-align: center; }
+.technical-breakdown-list { list-style: none; padding: 0; margin: 0; text-align: left; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.technical-breakdown-card { color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: 16px; }
+.technical-breakdown-card-info { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.technical-breakdown-number { flex: none; width: max-content; }
+.technical-breakdown-number pre { margin: 0; font: 12px/16px var(--font-mono); white-space: pre; }
+.technical-breakdown-card-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.technical-breakdown-card-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; }
+.technical-breakdown-card-description { font-size: 12px; line-height: 16px; }
+.technical-breakdown-card:hover .technical-breakdown-card-title { text-decoration: underline; text-underline-offset: 5px; }
+.technical-breakdown-card:focus-visible, .development-back:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+.technical-breakdown-card-image { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.technical-breakdown { width: 100%; max-width: 960px; margin: 0 auto; }
+.development-back { display: inline-block; color: inherit; text-underline-offset: 4px; }
+.technical-breakdown-header { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 760px; margin: 20px auto; text-align: center; }
+.technical-breakdown-deck { font-size: 12px; line-height: 16px; }
+.technical-breakdown-cover { width: 100%; max-height: 600px; object-fit: cover; display: block; margin-bottom: 20px; }
+.technical-breakdown-body { max-width: 720px; margin: 0 auto; font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }
+.technical-breakdown-body h2 { margin-bottom: 10px; }
+.technical-breakdown-body h3, .technical-breakdown-body h4, .technical-breakdown-body h5, .technical-breakdown-body h6 { font-size: 12px; line-height: 18px; margin: 20px 0 10px; }
+.technical-breakdown-body p, .technical-breakdown-body ul, .technical-breakdown-body ol, .technical-breakdown-body blockquote, .technical-breakdown-body pre { margin: 0 0 1.5em; }
+.technical-breakdown-body a { color: inherit; text-underline-offset: 4px; }
+.technical-breakdown-body img { display: block; width: auto; max-width: 100%; height: auto; margin: 2em auto; }
+.technical-breakdown-body blockquote { border-left: 2px solid currentColor; padding-left: 20px; }
+.technical-breakdown-body pre { overflow-x: auto; padding: 20px; background: var(--color-paper); color: #000; }
+.technical-breakdown-body :not(pre) > code { background: var(--color-paper); color: #000; padding: 2px 4px; }
+.technical-breakdown-body table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.technical-breakdown-body th, .technical-breakdown-body td { border: 1px solid currentColor; padding: 8px 12px; }
+.development-end { margin-top: 20px; }
+@media (min-width: 640px) {
+  .development-page { padding: 40px; }
+}
+@media (min-width: 1024px) {
+  .development-page { padding: 64px; }
+}
+@media (max-width: 600px) {
+  .technical-breakdown-list { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .technical-breakdown-card-info { gap: 12px; }
+}
+.game-dev-intro { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px 0 12px; text-align: center; }
+.game-dev-intro h1 { margin: 0; font-size: 12px; }
+.game-dev-intro > p { max-width: 650px; }
+.game-dev-skills { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 48px; margin: 0; }
+.game-dev-skills dt { margin-bottom: 8px; }
+.game-dev-skills dd { margin: 0; }
+.game-dev-divider { height: 12px; width: 100%; overflow: hidden; }
+.game-dev-divider img { width: 1152px; max-width: none; height: 12px; }
+.featured-game, .other-games { padding: 36px 0; }
+.featured-game > h3 { margin: 28px 0 16px; font-size: 12px; }
+.featured-game-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.featured-media { min-width: 0; }
+.featured-trailer { aspect-ratio: 16 / 9; background: #000; }
+.featured-trailer iframe { width: 100%; height: 100%; border: 0; }
+.featured-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; line-height: 20px; }
+.featured-copy p { margin: 0; }
+.featured-copy a, .other-games a { color: inherit; text-underline-offset: 4px; }
+.anii-thumbnails { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.anii-thumbnails button { padding: 0; cursor: pointer; border: 0; background: transparent; }
+.anii-thumbnails img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.anii-lightbox { max-width: min(1000px, 95vw); max-height: 95vh; padding: 20px; border: 1px solid var(--color-paper); color: var(--color-paper); background: #023fcc; }
+.anii-lightbox::backdrop { background: rgb(0 0 0 / 85%); }
+.anii-lightbox-content { display: flex; flex-direction: column; gap: 12px; }
+.anii-lightbox-content > img { display: block; max-width: 100%; max-height: 72vh; object-fit: contain; }
+.anii-lightbox-top, .anii-lightbox-controls { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.anii-lightbox button { cursor: pointer; border: 1px solid currentColor; padding: 8px 12px; background: transparent; color: inherit; }
+.other-games-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 28px; }
+.other-games-grid a { display: flex; flex-direction: column; gap: 12px; text-decoration: none; }
+.other-games-grid img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.other-games-grid h3 { font-size: 12px; }
+.other-games-grid p { margin: 0; }
+.other-games-grid span { text-decoration: underline; }
+.featured-copy a:focus-visible, .other-games a:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+@media (max-width: 700px) {
+  .featured-game-grid, .other-games-grid { grid-template-columns: minmax(0, 1fr); }
+  .featured-game-grid { gap: 20px; }
+  .featured-game, .other-games { padding: 20px 0; }
+}
+.site-placeholder {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 60vh;
+  margin: 0 auto;
+  padding: 64px;
+}
+.gallery-page { text-align: left; }
+.gallery-page > p { margin-top: 20px; }
+.site-placeholder p { margin: 0; }
+@media (max-width: 600px) {
+  .site-header-inner { min-height: 48px; padding: 8px 10px; gap: 4px 8px; font-size: 10px; flex-wrap: wrap; }
+  .site-navigation { gap: 8px; flex-wrap: wrap; }
+  .site-brand, .site-navigation a { padding: 4px 0; }
+  .site-placeholder { padding: 48px 20px; }
+}
+@media (max-width: 319px) {
+  .site-header-inner { flex-wrap: wrap; }
+}
 .connect-section {
   background: var(--color-paper);
   color: #000;
