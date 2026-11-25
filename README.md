@@ -30,6 +30,8 @@ In repository **Settings → Pages → Build and deployment**, select **GitHub A
 
 The workflow runs `npm ci`, type-checks, builds with Vite, and deploys only `dist/` to https://kirubiisfyne.github.io/. Publishing the repository root serves the uncompiled `/src/main.tsx` entry and cannot run the app.
 
+Build/upload and deployment run in separate jobs to avoid [the immediate artifact lookup race](https://github.com/actions/deploy-pages/issues/451). If only deployment fails, use **Re-run failed jobs** to reuse the uploaded artifact instead of uploading another artifact with the same name.
+
 The default Vite base `/` is correct for this user-site repository. No `gh-pages` branch, committed `dist/`, or additional base-path setting is needed.
 
 ## Publish models
