@@ -26,12 +26,12 @@ export function PortfolioPage() {
         <img src={greetingStrip} alt="" width={1152} height={12} className="h-[12px] w-[1152px] max-w-none" />
       </div>
       <H1 id="projects" label="[ PROJECTS ]" artworkSrc={projectsArtwork} />
+      <GameShowcase />
       <section aria-labelledby="art" className="flex flex-col gap-[20px]">
         <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={artDescription} />
         <ProjectCarousel projects={projects} />
       </section>
       <Art2DShowcase />
-      <GameShowcase />
       <SkillsSection />
     </main>
     <ConnectSection />

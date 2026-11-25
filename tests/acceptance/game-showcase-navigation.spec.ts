@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { navigateGame, showcaseUrl } from './game-showcase-fixtures'
+import { expect, test, navigateGame, showcaseUrl } from './game-showcase-fixtures'
 
 test('navigation wraps and Play follows selected game', async ({ page, context }) => {
   await page.goto(showcaseUrl())
@@ -10,7 +9,8 @@ test('navigation wraps and Play follows selected game', async ({ page, context }
   await expect(viewer).toBeFocused()
   await expect(page.getByText('[ D-pad / focus + arrows: change game ]')).toBeVisible()
   await page.keyboard.press('ArrowRight')
-  await page.keyboard.press('Tab')
+  // Native YouTube controls own their internal Tab stops.
+  await play.focus()
   await expect(play).toBeFocused()
   expect(await play.evaluate((element) => element.matches(':focus-visible') && getComputedStyle(element).outlineStyle !== 'none')).toBe(true)
   await expect(page.getByRole('heading', { name: 'Anii! Grow to Know' })).toBeVisible()

@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { navigateGame, showcaseUrl } from './game-showcase-fixtures'
+import { expect, test, navigateGame, showcaseUrl } from './game-showcase-fixtures'
 
 test('Strict Mode replay and repeated mount, navigation, and unmount stay clean', async ({ page }) => {
   const errors: string[] = []

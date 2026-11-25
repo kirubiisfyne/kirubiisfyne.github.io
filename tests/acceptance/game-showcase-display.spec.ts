@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './game-showcase-fixtures'
 
 test('showcase displays the initial game in a full-width stage', async ({ page }) => {
   await page.goto('/')
@@ -24,12 +24,17 @@ test('showcase displays the initial game in a full-width stage', async ({ page }
   const instructions = showcase.getByText('[ D-pad / focus + arrows: change game ]')
   await expect(instructions).toBeVisible()
   const instructionBox = await instructions.boundingBox()
-  expect(play!.y - (instructionBox!.y + instructionBox!.height)).toBeLessThanOrEqual(8)
+  const media = await showcase.getByRole('region', { name: 'KonTEXTo media' }).boundingBox()
+  expect(media!.y - (instructionBox!.y + instructionBox!.height)).toBeCloseTo(8, 0)
+  expect(play!.y - (media!.y + media!.height)).toBeCloseTo(8, 0)
   expect(await instructions.evaluate(element => getComputedStyle(element).fontSize)).toBe('12px')
   expect(title!.y + title!.height).toBeLessThanOrEqual(stage!.y + 2)
   expect(play!.y).toBeGreaterThanOrEqual(stage!.y + stage!.height - 2)
-  expect(description!.y).toBeGreaterThanOrEqual(play!.y + play!.height)
-  await expect(showcase.getByRole('button', { name: /Previous|Next/ })).toHaveCount(0)
+  expect(description!.y - (play!.y + play!.height)).toBeCloseTo(8, 0)
+  await expect(showcase.getByRole('button', { name: /Previous|Next game media/ })).toHaveCount(2)
+  await expect(showcase.locator('.game-carousel-stage').getByRole('button', { name: /Previous|Next/ })).toHaveCount(0)
+  await expect(showcase.locator('.game-description > p')).toHaveCount(3)
+  await expect(showcase.locator('.game-description ul')).toHaveCount(0)
   expect(await showcase.locator('.tv-canvas').evaluate(element => {
     const style = getComputedStyle(element)
     return style.borderTopWidth === '0px' && style.outlineStyle === 'none'

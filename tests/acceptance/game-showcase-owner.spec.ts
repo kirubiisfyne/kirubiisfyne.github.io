@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { navigateGame, showcaseUrl, useTvTransform } from './game-showcase-fixtures'
+import { expect, test, navigateGame, showcaseUrl, useTvTransform } from './game-showcase-fixtures'
 
 test('additional catalog entry participates without component registration', async ({ page }) => {
   await page.goto(showcaseUrl('extended'))

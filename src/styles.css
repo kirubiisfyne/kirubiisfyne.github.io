@@ -1,6 +1,14 @@
 @import '@fontsource/jetbrains-mono/400.css';
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'MS W98 UI';
+  src: url('./assets/fonts/MSW98UI-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 @theme {
   --font-mono: 'JetBrains Mono', monospace;
   --color-paper: #ebebeb;
@@ -354,10 +362,13 @@
 .game-controller-navigation[data-controller-state="ready"] .navigation-artwork { display: none; }
 
 .game-navigation-instructions {
+  position: relative;
   z-index: 1;
-  margin: 0;
+  /* Clear the TV canvas overflow before the tightly spaced details. */
+  margin: clamp(0px, calc(20vw - 120px), 128px) 0 0;
+  pointer-events: none;
 }
-.tv-stage:has(.tv-canvas:focus-visible) .game-navigation-instructions {
+.tv-stage:has(.tv-canvas:focus-visible) + .game-navigation-instructions {
   outline: 2px solid white;
   outline-offset: 2px;
 }
@@ -370,9 +381,11 @@
   pointer-events: none;
 }
 
-.game-details { margin: 4px auto 0; }
-.game-description { margin: 0; font-size: 12px; line-height: 16px; overflow-wrap: anywhere; }
-.game-play { width: 158px; margin: 0 auto 12px; padding: 0; color: inherit; text-decoration: none; cursor: pointer; }
+.game-details { display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 8px auto 0; }
+.game-description { width: 100%; max-width: none; margin: 0; font-size: 12px; line-height: 18px; text-align: left; overflow-wrap: anywhere; }
+.game-description p + p { margin-top: 8px; }
+.game-description strong { font-family: 'MS W98 UI', var(--font-mono); font-weight: 700; }
+.game-details .game-play { flex: none; width: 158px; margin: 0 auto; padding: 0; color: inherit; text-decoration: none; cursor: pointer; }
 .game-play:focus-visible { outline: 2px solid white; outline-offset: 6px; }
 .game-announcement, .game-link-hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
@@ -617,8 +630,7 @@
   display: none;
 }
 
-.viewer-instructions,
-.game-navigation-instructions {
+.viewer-instructions {
   position: absolute;
   inset-inline: 4px;
   bottom: 2px;
@@ -785,6 +797,37 @@
 .navigation-button:enabled:is(:hover, :focus-visible) .navigation-artwork::after {
   mask-image: var(--navigation-hover);
   mask-size: 100% 100%;
+}
+
+.game-media-carousel {
+  --viewer-height: clamp(220px, 30cqw, 280px);
+  margin-block: 0;
+}
+
+.game-media-slot {
+  inset: 0;
+  width: min(72%, 480px);
+  margin-inline: auto;
+}
+
+.game-media-open {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.game-media-slot img { width: 100%; height: 100%; object-fit: contain; }
+
+.game-media-player { width: 100%; height: 100%; border: 0; }
+.game-media-player:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+
+.game-media-carousel .navigation-button { top: 50%; width: 44px; height: 44px; }
+.game-media-carousel .navigation-previous { left: 0; }
+.game-media-carousel .navigation-next { right: 0; }
+.game-media-carousel .navigation-artwork { width: 22px; height: 34px; flex-shrink: 0; }
+
+@container (max-width: 600px) {
+  .game-media-slot { width: 76%; }
 }
 
 @container (min-width: 600px) {

@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { disableWebGL, failAsset, holdAsset, navigateGame, showcaseUrl } from './game-showcase-fixtures'
+import { expect, test, disableWebGL, failAsset, holdAsset, navigateGame, showcaseUrl } from './game-showcase-fixtures'
 
 test('failed TV model leaves game navigation and links usable', async ({ page }) => {
   await failAsset(page, '**/practice_tv.gltf*')

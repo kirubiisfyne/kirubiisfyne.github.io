@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { showcaseUrl } from './game-showcase-fixtures'
+import { expect, test, showcaseUrl } from './game-showcase-fixtures'
 
 test('enlarged TV and controller composition renders in the canvas', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })

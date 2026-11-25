@@ -1,7 +1,20 @@
-import type { Page, Route } from '@playwright/test'
+import { test as base, type Page, type Route } from '@playwright/test'
+
+export { expect } from '@playwright/test'
+
+export const test = base.extend({
+  page: async ({ page }, use) => {
+    // Native embeds are tested locally; real YouTube playback is checked separately.
+    await page.route('https://www.youtube-nocookie.com/embed/**', route => route.fulfill({
+      contentType: 'text/html',
+      body: '<!doctype html><html><body style="margin:0;background:#111;color:white;display:grid;place-items:center;min-height:100vh"><button aria-label="Play trailer">YouTube trailer fixture</button></body></html>',
+    }))
+    await use(page)
+  },
+})
 
 /** Catalog fixtures are selected only by the acceptance-only HTML entry point. */
-export function showcaseUrl(catalog: 'default' | 'empty' | 'single' | 'extended' = 'default'): string {
+export function showcaseUrl(catalog: 'default' | 'empty' | 'single' | 'extended' | 'media-empty' | 'media-single' = 'default'): string {
   return `/tests/acceptance/game-showcase.html?catalog=${catalog}`
 }
 
