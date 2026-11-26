@@ -20,5 +20,6 @@ export const projects: readonly Project[] = __MODEL_PATHS__.map((path) => {
     modelUrl,
     ...(config?.description ? { description: config.description } : {}),
     zRotation: config?.zRotation ?? 0,
+    ...(config?.specifications ? { specifications: config.specifications } : {}),
   }
 })

@@ -19,6 +19,7 @@ import type {
   ViewerSelectionRequest,
   ViewerStatus,
 } from '../lib/model-viewer'
+import { projectCaption } from '../lib/project-caption'
 import type { Project } from '../types/project'
 import { CarouselMetadata, type MetadataAcceptanceHooks, type MetadataPart } from './CarouselMetadata'
 
@@ -112,7 +113,7 @@ export function ProjectCarousel({ projects, acceptance, beltSpacing, orbitRadius
       for (const part of ['title', 'caption'] as const) {
         const proof = proofs.current[part]
         const node = nodes.current[part]
-        const text = part === 'title' ? `[ ${target.title} ]` : (target.description ?? '')
+        const text = part === 'title' ? `[ ${target.title} ]` : projectCaption(target)
         if (
           !proof ||
           proof.node !== node ||
@@ -122,7 +123,7 @@ export function ProjectCarousel({ projects, acceptance, beltSpacing, orbitRadius
           node.dataset.selectionId !== String(ticket.requestId) ||
           node.dataset.modelId !== target.id ||
           node.textContent !== text ||
-          (part === 'caption' && node.hidden !== !target.description)
+          (part === 'caption' && node.hidden !== !projectCaption(target))
         )
           return false
       }
@@ -327,7 +328,8 @@ export function ProjectCarousel({ projects, acceptance, beltSpacing, orbitRadius
     if (document.visibilityState === 'hidden' || !document.hasFocus() || !canvasVisible.current) return
     queueFrame.current = requestAnimationFrame(() => {
       queueFrame.current = null
-      if (terminal.current || document.visibilityState === 'hidden' || !document.hasFocus() || !canvasVisible.current) return
+      if (terminal.current || document.visibilityState === 'hidden' || !document.hasFocus() || !canvasVisible.current)
+        return
       if (phase.current !== 'ready' && phase.current !== 'error') return
       const input = queue.current.shift()
       if (input) dispatch(input, true)
@@ -342,7 +344,11 @@ export function ProjectCarousel({ projects, acceptance, beltSpacing, orbitRadius
     }
     if (terminal.current) {
       dispatch(input, false)
-    } else if ((phase.current === 'ready' || phase.current === 'error') && queue.current.length === 0 && queueFrame.current === null) {
+    } else if (
+      (phase.current === 'ready' || phase.current === 'error') &&
+      queue.current.length === 0 &&
+      queueFrame.current === null
+    ) {
       dispatch(input, false)
     } else {
       queue.current.push(input)

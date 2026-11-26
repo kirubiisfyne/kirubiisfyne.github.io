@@ -1,5 +1,6 @@
 import { use, useCallback, useLayoutEffect, useRef } from 'react'
 import type { MetadataTicket } from '../lib/model-viewer'
+import { projectCaption } from '../lib/project-caption'
 import type { Project } from '../types/project'
 
 export type MetadataPart = 'title' | 'caption'
@@ -24,6 +25,7 @@ export function CarouselMetadata({ project, ticket, part, onAttach, onVerify, ac
       use(gate)
     }
   }
+  const caption = projectCaption(project)
   const nodeRef = useRef<HTMLElement | null>(null)
   const attach = useCallback(
     (node: HTMLElement | null) => {
@@ -35,17 +37,17 @@ export function CarouselMetadata({ project, ticket, part, onAttach, onVerify, ac
 
   useLayoutEffect(() => {
     const node = nodeRef.current
-    const text = part === 'title' ? `[ ${project.title} ]` : (project.description ?? '')
+    const text = part === 'title' ? `[ ${project.title} ]` : caption
     if (
       !node ||
       node.textContent !== text ||
       node.dataset.selectionId !== String(ticket.requestId) ||
       node.dataset.modelId !== ticket.modelId ||
-      (part === 'caption' && node.hidden !== !project.description)
+      (part === 'caption' && node.hidden !== !caption)
     )
       return
     return onVerify(ticket, part, node)
-  }, [onVerify, part, project.title, project.description, ticket])
+  }, [onVerify, part, project.title, caption, ticket])
 
   const identity = {
     'data-selection-details': part,
@@ -57,8 +59,8 @@ export function CarouselMetadata({ project, ticket, part, onAttach, onVerify, ac
       [ {project.title} ]
     </h3>
   ) : (
-    <figcaption ref={attach} className="project-description" hidden={!project.description} {...identity}>
-      {project.description ?? ''}
+    <figcaption ref={attach} className="project-description" hidden={!caption} {...identity}>
+      {caption}
     </figcaption>
   )
 }

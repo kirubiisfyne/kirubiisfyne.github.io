@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import type { ModelSpecifications } from './src/types/project.ts';
 
 function discoverModelPaths(root: string): string[] {
   let rootInfo;
@@ -32,8 +33,8 @@ function discoverModelPaths(root: string): string[] {
   return paths.sort();
 }
 
-function discoverModelConfigs(root: string, paths: readonly string[]) {
-  const configs: Record<string, { zRotation?: number; name?: string; description?: string }> = {};
+export function discoverModelConfigs(root: string, paths: readonly string[]) {
+  const configs: Record<string, { zRotation?: number; name?: string; description?: string; specifications?: ModelSpecifications }> = {};
   for (const path of paths) {
     const sidecar = join(root, path.replace(/\.glb$/, '.config.json'));
     let text: string;
@@ -50,9 +51,9 @@ function discoverModelConfigs(root: string, paths: readonly string[]) {
         throw new Error('Expected a JSON object.');
       }
       const config = value as Record<string, unknown>;
-      const parsed: { zRotation?: number; name?: string; description?: string } = {};
+      const parsed: { zRotation?: number; name?: string; description?: string; specifications?: ModelSpecifications } = {};
       for (const key of Object.keys(config)) {
-        if (key !== 'zRotation' && key !== 'name' && key !== 'description') {
+        if (key !== 'zRotation' && key !== 'name' && key !== 'description' && key !== 'specifications') {
           throw new Error(`Unknown field "${key}".`);
         }
       }
@@ -67,6 +68,26 @@ function discoverModelConfigs(root: string, paths: readonly string[]) {
         if (typeof config[key] !== 'string') throw new Error(`"${key}" must be a string.`);
         const trimmed = config[key].trim();
         if (trimmed) parsed[key] = trimmed;
+      }
+      if (config.specifications !== undefined) {
+        if (!config.specifications || typeof config.specifications !== 'object' || Array.isArray(config.specifications)) {
+          throw new Error('"specifications" must be an object.');
+        }
+        const specs: Record<string, number | string> = {};
+        for (const [key, value] of Object.entries(config.specifications)) {
+          if (['triangleCount', 'vertexCount', 'materialCount'].includes(key)) {
+            if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+              throw new Error(`"specifications.${key}" must be a nonnegative safe integer.`);
+            }
+            specs[key] = value;
+          } else if (['textureResolution', 'uvMapping', 'software', 'materialWorkflow', 'targetPlatform'].includes(key)) {
+            if (typeof value !== 'string') throw new Error(`"specifications.${key}" must be a string.`);
+            if (value.trim()) specs[key] = value.trim();
+          } else {
+            throw new Error(`Unknown specifications field "${key}".`);
+          }
+        }
+        if (Object.keys(specs).length) parsed.specifications = specs;
       }
       configs[path] = parsed;
     } catch (error) {

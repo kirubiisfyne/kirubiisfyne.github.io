@@ -57,26 +57,35 @@ export default function ModelViewer({
     let active = true
     let unregister: (() => void) | undefined
     let controller: ModelViewerController | undefined
-    try {
-      controller = createModelViewer(
-        canvas,
-        projects,
-        {
-          onStatus: (next) => {
-            if (active) onStatus(next)
-          },
-          finalize: (ticket) => active && finalize(ticket),
-        },
-        acceptance,
-        initialOptions.current
-      )
-      controllerRef.current = controller
-      unregister = register(controller)
-    } catch (error) {
-      onUnavailable(error instanceof Error ? error.message : '3D rendering is unavailable on this device.')
-    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting || !active) return
+        observer.disconnect()
+        try {
+          controller = createModelViewer(
+            canvas,
+            projects,
+            {
+              onStatus: (next) => {
+                if (active) onStatus(next)
+              },
+              finalize: (ticket) => active && finalize(ticket),
+            },
+            acceptance,
+            initialOptions.current
+          )
+          controllerRef.current = controller
+          unregister = register(controller)
+        } catch (error) {
+          onUnavailable(error instanceof Error ? error.message : '3D rendering is unavailable on this device.')
+        }
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(canvas)
     return () => {
       active = false
+      observer.disconnect()
       unregister?.()
       controllerRef.current = null
       controller?.dispose()

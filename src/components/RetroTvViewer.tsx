@@ -28,35 +28,50 @@ export function RetroTvViewer({
   }
 
   useEffect(() => {
-    if (!canvas.current) return
-    try {
-      const controller = createRetroTvViewer(
-        canvas.current,
-        setStatus,
-        setControllerStatus,
-        (previous, next) => {
-          const style = controls.current?.style
-          style?.setProperty('--previous-x', `${previous.x * 100}%`)
-          style?.setProperty('--previous-y', `${previous.y * 100}%`)
-          style?.setProperty('--next-x', `${next.x * 100}%`)
-          style?.setProperty('--next-y', `${next.y * 100}%`)
-          const width = controls.current?.clientWidth ?? 0
-          const separation = Math.abs(next.x - previous.x) * width
-          style?.setProperty('--hit-width', `${Math.max(1, Math.min(24, separation * 0.9))}px`)
-        },
-        (direction) => {
-          if (!navigation.current.navigationEnabled) return
-          viewer.current?.nudge(direction)
-          navigation.current.onNavigate(direction)
+    const target = canvas.current
+    if (!target) return
+    let active = true
+    let controller: ReturnType<typeof createRetroTvViewer> | undefined
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting || !active) return
+        observer.disconnect()
+        try {
+          controller = createRetroTvViewer(
+            target,
+            setStatus,
+            setControllerStatus,
+            (previous, next) => {
+              const style = controls.current?.style
+              style?.setProperty('--previous-x', `${previous.x * 100}%`)
+              style?.setProperty('--previous-y', `${previous.y * 100}%`)
+              style?.setProperty('--next-x', `${next.x * 100}%`)
+              style?.setProperty('--next-y', `${next.y * 100}%`)
+              const width = controls.current?.clientWidth ?? 0
+              const separation = Math.abs(next.x - previous.x) * width
+              style?.setProperty('--hit-width', `${Math.max(1, Math.min(24, separation * 0.9))}px`)
+            },
+            (direction) => {
+              if (!navigation.current.navigationEnabled) return
+              viewer.current?.nudge(direction)
+              navigation.current.onNavigate(direction)
+            }
+          )
+          viewer.current = controller
+          const latest = previousImage.current
+          if (latest) controller.setImage(latest.image, latest.rotation)
+        } catch {
+          setStatus('unavailable')
         }
-      )
-      viewer.current = controller
-      return () => {
-        viewer.current = null
-        controller.dispose()
-      }
-    } catch {
-      setStatus('unavailable')
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(target)
+    return () => {
+      active = false
+      observer.disconnect()
+      viewer.current = null
+      controller?.dispose()
     }
   }, [])
   useEffect(() => {

@@ -1,9 +1,9 @@
-import { useState, type CSSProperties } from 'react'
-import playArtwork from '../assets/figma/view-play.svg'
+import { useEffect, useState } from 'react'
 import { games as defaultGames, type Game } from '../data/games'
 import { gameDescription } from '../data/site-copy'
-import { H2 } from './H2'
+import { GameInfo } from './GameInfo'
 import { GameMediaCarousel } from './GameMediaCarousel'
+import { H2 } from './H2'
 import { RetroTvViewer } from './RetroTvViewer'
 
 const gameDevAscii = [
@@ -14,10 +14,34 @@ const gameDevAscii = [
   ' ',
 ].join('\n')
 
+function gameIndexFromUrl(games: readonly Game[]) {
+  const id = new URLSearchParams(window.location.search).get('game')
+  return Math.max(
+    0,
+    games.findIndex((game) => game.id === id)
+  )
+}
+
 export function GameShowcase({ games = defaultGames }: { readonly games?: readonly Game[] }) {
-  const [index, setIndex] = useState(0)
+  const [index, setIndex] = useState(() => gameIndexFromUrl(games))
   const selected = games.length ? games[index % games.length] : undefined
   const move = (direction: number) => setIndex((current) => (current + direction + games.length) % games.length)
+
+  useEffect(() => {
+    const restoreSelection = () => setIndex(gameIndexFromUrl(games))
+    window.addEventListener('popstate', restoreSelection)
+    return () => window.removeEventListener('popstate', restoreSelection)
+  }, [games])
+
+  useEffect(() => {
+    if (!selected) return
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('game') && index === 0) return
+    if (url.searchParams.get('game') === selected.id) return
+    url.searchParams.set('game', selected.id)
+    window.history.replaceState(window.history.state, '', url)
+  }, [selected, index])
+
   return (
     <section className="game-showcase" aria-labelledby="game-showcase-heading">
       <H2
@@ -43,27 +67,7 @@ export function GameShowcase({ games = defaultGames }: { readonly games?: readon
         {selected ? (
           <div className="game-details">
             <GameMediaCarousel key={selected.id} game={selected} />
-            <a className="view-mode-button game-play" href={selected.playUrl} target="_blank" rel="noopener noreferrer">
-              <span
-                aria-hidden="true"
-                className="view-mode-artwork"
-                style={{ '--view-artwork': `url("${playArtwork}")`, width: 48, height: 12 } as CSSProperties}
-              >
-                <span className="view-mode-glyph view-mode-arrow-start" />
-                <span className="view-mode-glyph view-mode-label" />
-                <span className="view-mode-glyph view-mode-arrow-end" />
-              </span>
-              <span className="sr-only">Play (opens in a new tab)</span>
-            </a>
-            <div className="game-description">
-              {[selected.description, selected.features.join(' '), selected.context].map((paragraph) => (
-                <p key={paragraph}>
-                  {paragraph
-                    .split(/\*\*([^*]+)\*\*/)
-                    .map((text, index) => (index % 2 ? <strong key={text}>{text}</strong> : text))}
-                </p>
-              ))}
-            </div>
+            <GameInfo game={selected} />
             <p className="game-announcement" aria-live="polite" aria-atomic="true">
               {selected.name}, {(index % games.length) + 1} of {games.length}
             </p>

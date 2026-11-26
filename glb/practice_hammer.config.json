@@ -1,5 +1,14 @@
 {
   "zRotation": -30,
-  "name": "practice_hammer.glb",
-  "description": "Low-Poly Fantasy Paladin Hammer modeled in Maya, Textured in Substance 3D Painter."
+  "name": "Fantasy Paladin Hammer",
+  "description": "Low-poly fantasy paladin hammer modeled in Maya and textured in Substance 3D Painter.",
+  "specifications": {
+    "triangleCount": 508,
+    "vertexCount": 811,
+    "textureResolution": "1024 × 1024 (3 maps)",
+    "materialCount": 1,
+    "uvMapping": "UV0 present",
+    "software": "Maya, Substance 3D Painter",
+    "materialWorkflow": "PBR metallic-roughness"
+  }
 }

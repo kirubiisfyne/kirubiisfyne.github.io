@@ -1,5 +1,14 @@
 {
   "zRotation": -30,
-  "name": "practice_sword.glb",
-  "description": "Low-Poly Dark-Fantasy Sword modeled in Maya, Textured in Substance 3D Painter."
+  "name": "Dark Fantasy Sword",
+  "description": "Low-poly dark fantasy sword modeled in Maya and textured in Substance 3D Painter.",
+  "specifications": {
+    "triangleCount": 3920,
+    "vertexCount": 3137,
+    "textureResolution": "1024 × 1024 (3 maps)",
+    "materialCount": 1,
+    "uvMapping": "UV0 present",
+    "software": "Maya, Substance 3D Painter",
+    "materialWorkflow": "PBR metallic-roughness"
+  }
 }

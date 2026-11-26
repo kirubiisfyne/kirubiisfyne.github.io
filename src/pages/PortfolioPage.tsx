@@ -16,25 +16,29 @@ import { artDescription, introduction } from '../data/site-copy'
 export function PortfolioPage() {
   return (
     <>
-    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-[20px] p-[20px] sm:p-[40px] lg:p-[64px]">
-      <header className="flex flex-col items-start gap-[8px]">
-        <img src={greeting} alt="Hi! Kirby Bilbao, Greeting you!" width={248} height={12} />
-        <img src={wordmark} alt="kirubiisfyne" width={581} height={49} className="h-auto w-full max-w-[580.34px]" />
-        <p className="min-h-[48px] w-full max-w-[574px]">{introduction}</p>
-      </header>
-      <div aria-hidden="true" className="h-[12px] w-full overflow-hidden">
-        <img src={greetingStrip} alt="" width={1152} height={12} className="h-[12px] w-[1152px] max-w-none" />
-      </div>
-      <H1 id="projects" label="[ PROJECTS ]" artworkSrc={projectsArtwork} />
-      <GameShowcase />
-      <section aria-labelledby="art" className="flex flex-col gap-[20px]">
-        <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={artDescription} />
-        <ProjectCarousel projects={projects} />
-      </section>
-      <Art2DShowcase />
-      <SkillsSection />
-    </main>
-    <ConnectSection />
+      <a className="skip-link" href="#projects">
+        Skip to projects
+      </a>
+      <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-[20px] p-[20px] sm:p-[40px] lg:p-[64px]">
+        <header className="flex flex-col items-start gap-[8px]">
+          <img src={greeting} alt="Hi! Kirby Bilbao, greeting you!" width={248} height={12} />
+          <img src={wordmark} alt="kirubiisfyne" width={581} height={49} className="h-auto w-full max-w-[580.34px]" />
+          <h1 className="hero-title">[ Game Developer &amp; Artist ]</h1>
+          <p className="w-full max-w-[574px]">{introduction}</p>
+        </header>
+        <div aria-hidden="true" className="h-[12px] w-full overflow-hidden">
+          <img src={greetingStrip} alt="" width={1152} height={12} className="h-[12px] w-[1152px] max-w-none" />
+        </div>
+        <H1 id="projects" label="[ PROJECTS ]" artworkSrc={projectsArtwork} level={2} />
+        <GameShowcase />
+        <section aria-labelledby="art" className="flex flex-col gap-[20px]">
+          <H2 id="art" label="[ 3D Art ]" artworkSrc={artArtwork} description={artDescription} />
+          <ProjectCarousel projects={projects} />
+        </section>
+        <Art2DShowcase />
+        <SkillsSection />
+      </main>
+      <ConnectSection />
     </>
   )
 }

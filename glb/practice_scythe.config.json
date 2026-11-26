@@ -1,5 +1,14 @@
 {
   "zRotation": 0,
-  "name": "practice_scythe.glb",
-  "description": "Low-Poly Bloody Horror-Inspired Scythe modeled in Maya, Textured in Substance 3D Painter."
+  "name": "Horror-Inspired Scythe",
+  "description": "Low-poly, bloody horror-inspired scythe modeled in Maya and textured in Substance 3D Painter.",
+  "specifications": {
+    "triangleCount": 220,
+    "vertexCount": 330,
+    "textureResolution": "1024 × 1024 (3 maps)",
+    "materialCount": 1,
+    "uvMapping": "UV0 present",
+    "software": "Maya, Substance 3D Painter",
+    "materialWorkflow": "PBR metallic-roughness"
+  }
 }

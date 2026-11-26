@@ -50,6 +50,11 @@
   }
 }
 
+.hero-title { margin: 0; font-family: 'MS W98 UI', var(--font-mono); font-size: 12px; font-weight: 700; line-height: 16px; }
+.game-info-link:focus-visible { outline: 2px solid var(--color-paper); outline-offset: 4px; }
+.skip-link { position: absolute; z-index: 10; top: 8px; left: 8px; padding: 8px; background: var(--color-paper); color: var(--color-cobalt); transform: translateY(-200%); }
+.skip-link:focus { transform: none; }
+
 .connect-section {
   background: var(--color-paper);
   color: #000;
@@ -382,11 +387,30 @@
 }
 
 .game-details { display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 8px auto 0; }
-.game-description { width: 100%; max-width: none; margin: 0; font-size: 12px; line-height: 18px; text-align: left; overflow-wrap: anywhere; }
-.game-description p + p { margin-top: 8px; }
+.game-description { width: 100%; margin: 0; font-size: 12px; line-height: 16px; text-align: left; overflow-wrap: anywhere; }
+.game-info { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px; }
+.game-actions { display: flex; align-items: center; justify-content: center; gap: 64px; width: 100%; height: 32px; padding-inline: 64px; }
+.game-info-link { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; flex: 0 1 158.667px; min-width: 0; min-height: 32px; color: inherit; font-family: 'MS W98 UI', var(--font-mono); font-weight: 700; white-space: nowrap; text-decoration: none; }
+.game-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.game-info-section { min-width: 0; }
+.game-info-heading { position: relative; display: flex; align-items: center; justify-content: center; height: 9px; margin: 0; isolation: isolate; color: #fff; background: var(--color-paper); font-family: 'MS W98 UI', var(--font-mono); font-weight: 700; line-height: 16px; white-space: nowrap; }
+.game-info-heading span { mix-blend-mode: difference; }
+.game-info-section:nth-child(odd) .game-info-heading::after { content: ''; position: absolute; inset-block: 0; right: -10px; width: 10px; background: var(--color-paper); }
+/* Match Figma's shared row inset without clipping text at the panel edge. */
+.game-info-list { display: flex; flex-direction: column; gap: 4px; margin: 10px -10px 0 0; padding: 10px 0 10px 10px; list-style: none; }
+.game-info-description .game-info-list { gap: 20px; }
+.game-info-list li { display: flex; align-items: center; gap: 10px; }
+.game-info-list p { flex: 1; min-width: 0; margin: 0; }
+.game-info-chevron { flex: none; align-self: stretch; width: 7px; font-family: 'MS W98 UI', var(--font-mono); font-weight: 700; }
+.game-info-note { margin: 20px 10px 0; font-family: 'MS W98 UI', var(--font-mono); font-weight: 700; }
+.game-info-note + .game-info-list { margin-top: 0; padding-top: 4px; }
 .game-description strong { font-family: 'MS W98 UI', var(--font-mono); font-weight: 700; }
-.game-details .game-play { flex: none; width: 158px; margin: 0 auto; padding: 0; color: inherit; text-decoration: none; cursor: pointer; }
-.game-play:focus-visible { outline: 2px solid white; outline-offset: 6px; }
+@media (max-width: 767px) {
+  .game-actions { gap: 8px; padding-inline: 0; }
+  .game-info-grid { grid-template-columns: minmax(0, 1fr); }
+  .game-info-list { margin-right: 0; padding-right: 10px; }
+  .game-info-heading::after { display: none; }
+}
 .game-announcement, .game-link-hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .project-carousel {
@@ -426,6 +450,8 @@
 }
 
 .project-description {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
   min-height: 18px;
   font-size: 12px;
   line-height: 16px;
@@ -660,7 +686,8 @@
   isolation: isolate;
 }
 
-.view-mode-button::before {
+.view-mode-button::before,
+.game-info-link::before {
   position: absolute;
   inset-inline: 0;
   top: 50%;
@@ -720,7 +747,7 @@
 }
 
 .view-mode-button:enabled:is(:hover, :focus-visible)::before,
-.game-play:is(:hover, :focus-visible)::before {
+.game-info-link:is(:hover, :focus-visible)::before {
   opacity: 1;
 }
 
