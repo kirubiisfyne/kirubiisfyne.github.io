@@ -368,6 +368,7 @@
 
 .game-navigation-instructions {
   position: relative;
+  top: -4px;
   z-index: 1;
   /* Clear the TV canvas overflow before the tightly spaced details. */
   margin: clamp(0px, calc(20vw - 120px), 128px) 0 0;

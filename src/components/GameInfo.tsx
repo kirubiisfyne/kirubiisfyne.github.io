@@ -70,7 +70,7 @@ export function GameInfo({ game }: { readonly game: Game }) {
           )}
           {!!game.teamContributions?.length && (
             <>
-              <h5 className="game-info-note">Team-developed systems</h5>
+              {!!game.personalContributions?.length && <h5 className="game-info-note">Team-developed systems</h5>}
               <InfoList items={game.teamContributions} />
             </>
           )}

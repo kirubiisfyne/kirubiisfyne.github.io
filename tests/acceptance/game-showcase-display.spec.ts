@@ -27,7 +27,7 @@ test('showcase displays the initial game in a full-width stage', async ({ page }
   await expect(instructions).toBeVisible()
   const instructionBox = await instructions.boundingBox()
   const media = await showcase.getByRole('region', { name: 'KonTEXTo media' }).boundingBox()
-  expect(media!.y - (instructionBox!.y + instructionBox!.height)).toBeCloseTo(8, 0)
+  expect(media!.y - (instructionBox!.y + instructionBox!.height)).toBeCloseTo(12, 0)
   expect(play!.y - (media!.y + media!.height)).toBeCloseTo(18, 0)
   expect(await instructions.evaluate(element => getComputedStyle(element).fontSize)).toBe('12px')
   expect(title!.y + title!.height).toBeLessThanOrEqual(stage!.y + 2)

@@ -6,9 +6,10 @@ import aniiDecoration from '../../games/anii/screenshot-04.webp?url'
 import aniiExpansion from '../../games/anii/screenshot-05.webp?url'
 import aniiTrailer from '../../games/anii/trailer.webp?url'
 import kontextoImage from '../../games/kontexto/emissive.png?url'
-import kontextoCampus from '../../games/kontexto/screenshot-01.webp?url'
-import kontextoEditor from '../../games/kontexto/screenshot-02.webp?url'
-import kontextoAdviser from '../../games/kontexto/screenshot-03.webp?url'
+import kontextoCourtyard from '../../games/kontexto/screenshot-01.webp?url'
+import kontextoCourt from '../../games/kontexto/screenshot-02.webp?url'
+import kontextoCorridor from '../../games/kontexto/screenshot-03.webp?url'
+import kontextoEditor from '../../games/kontexto/screenshot-04.webp?url'
 import kontextoTrailer from '../../games/kontexto/trailer.webp?url'
 
 export type GameMedia = {
@@ -65,16 +66,21 @@ export const games: readonly Game[] = [
       'Built in Unity 6 with UI Toolkit as a senior thesis project by an Entertainment and Multimedia Computing student team at West Visayas State University. KonTEXTo connects academic research with independent game development through practical text-editing and document-layout challenges.',
     media: [
       { kind: 'trailer', url: kontextoTrailer, alt: 'KonTEXTo trailer poster', videoId: 'wYJc2vGsmZU' },
-      { kind: 'screenshot', url: kontextoCampus, alt: 'Kiko exploring a sunlit campus corridor in KonTEXTo' },
       {
         kind: 'screenshot',
-        url: kontextoEditor,
-        alt: 'Document editor and formatting instructions on a classroom computer in KonTEXTo',
+        url: kontextoCourtyard,
+        alt: 'Kiko looking across a campus courtyard at sunset in KonTEXTo',
+      },
+      { kind: 'screenshot', url: kontextoCourt, alt: 'Kiko standing by an outdoor basketball court in KonTEXTo' },
+      {
+        kind: 'screenshot',
+        url: kontextoCorridor,
+        alt: 'Kiko approaching another student by a campus corridor in KonTEXTo',
       },
       {
         kind: 'screenshot',
-        url: kontextoAdviser,
-        alt: 'Mrs. Santos giving Kiko feedback on a submitted document in KonTEXTo',
+        url: kontextoEditor,
+        alt: 'Document editor and email with formatting instructions in KonTEXTo',
       },
     ],
     emissiveUrl: kontextoImage,
@@ -100,15 +106,15 @@ export const games: readonly Game[] = [
       'Points, EXP, and leveling systems.',
     ],
     description:
-      'An **educational farming simulator** about **Filipino Bahay Kubo crops** and agricultural tools. Plant and harvest crops, answer quizzes, and decorate a garden while learning through play.',
+      'An educational farming simulator about Filipino Bahay Kubo crops and agricultural tools. Plant and harvest crops, answer quizzes, and decorate a garden while learning through play.',
     features: [
-      'Plant, water, and harvest **six Bahay Kubo crops**.',
-      'Answer **agriculture-themed quizzes** to earn experience and unlock new crops.',
-      '**Personalize your garden** with scarecrows and flowers, then unlock more plots as you progress.',
-      'Watch for the special Anii Event, which temporarily increases harvest yields by **50%**.',
+      'Plant, water, and harvest six Bahay Kubo crops.',
+      'Answer agriculture-themed quizzes to earn experience and unlock new crops.',
+      'Personalize your garden with scarecrows and flowers, then unlock more plots as you progress.',
+      'Watch for the special Anii Event, which temporarily increases harvest yields by 50%.',
     ],
     context:
-      'Created in Unity for an **Educational Game Jam** themed around Learning and Literacy / Life Skills and Career Readiness. Developed by **West Visayas State University** student creators under **Ukiyo Studios**, with original music and soundscapes by pizza doggy.',
+      'Created in Unity for an Educational Game Jam themed around Learning and Literacy / Life Skills and Career Readiness. Developed by West Visayas State University student creators under Ukiyo Studios, with original music and soundscapes by pizza doggy.',
     media: [
       { kind: 'trailer', url: aniiTrailer, alt: 'Anii! Grow to Know trailer poster', videoId: 'xJZeUs_QqVA' },
       {

@@ -7,7 +7,8 @@ import { expect, navigateGame, showcaseUrl, test } from './game-showcase-fixture
 
 test('hero stays compact without contact shortcuts while footer keeps contacts and availability', async ({ page }) => {
   await page.goto('/')
-  await expect(page).toHaveTitle('Kirby Bilbao — Gameplay Programmer')
+  await expect(page).toHaveTitle('Portfolio')
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(0)
   const title = page.getByRole('heading', { level: 1 })
   await expect(title).toHaveText('[ Game Developer & Artist ]')
   await expect(title).toHaveCSS('font-size', '12px')
@@ -59,7 +60,16 @@ test('game permalinks retain verified role and ownership content without omitted
   const roles = page.locator('.game-info-roles li p')
   await expect(roles).toHaveText(['Lead Developer', 'Game Director'])
   await expect(page.locator('.game-facts')).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: 'Team-developed systems' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Team-developed systems' })).toHaveCount(0)
+  await expect(page.locator('.game-info-description strong, .game-info-features strong')).toHaveCount(0)
+  await expect(page.locator('.game-info-description p').first()).toHaveCSS('font-weight', '400')
+  await expect(page.locator('.game-info-description p').first()).toHaveCSS('font-size', '12px')
+  expect(
+    await page
+      .locator('.game-info-description p')
+      .first()
+      .evaluate((node) => getComputedStyle(node).fontFamily)
+  ).toContain('JetBrains Mono')
   await expect(page.locator('.game-info-contributions li')).toHaveCount(5)
   await expect(page.getByRole('link', { name: '[ Link to this game ]', exact: true })).toHaveCount(0)
   await expect(page.getByRole('link', { name: /Source Code: Anii/ })).toHaveAttribute(
